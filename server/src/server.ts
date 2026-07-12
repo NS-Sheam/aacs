@@ -1,6 +1,7 @@
 import { Server } from "http";
 import app from "./app";
 import { errorlogger, logger } from "./app/config/logger";
+import { connectDB } from "./app/config/db";
 
 const config = {
   port: process.env.PORT || 7777,
@@ -10,6 +11,7 @@ let server: Server | null = null;
 
 async function main() {
   try {
+    await connectDB();
     server = app.listen(config.port, () => {
       console.log(
         `🚀 Server is running on ${config.node_env} mode at http://localhost:${config.port}`,
