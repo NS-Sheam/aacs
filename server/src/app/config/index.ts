@@ -17,8 +17,7 @@ const config: Config = {
   db_uri: process.env.MONGODB_URI!,
   redisHost: process.env.REDIS_HOST || "127.0.0.1",
   redisPort: Number(process.env.REDIS_PORT) || 6379,
-  githubToken:
-    process.env.GITHUB_TOKEN || "your_github_personal_access_token_here",
+  githubToken: process.env.GITHUB_TOKEN!,
 };
 
 export default config;
