@@ -12,6 +12,8 @@ const stats = {
 
 
 const Dashboard = () => {
+    const forcedelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    forcedelay(50000);
     return (
        <main className="pt-20 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
