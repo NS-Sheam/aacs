@@ -1,3 +1,5 @@
+import { SubmissionProgress } from "@/types";
+
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL;
 
@@ -19,3 +21,11 @@ export const apiFetch = async <T>(
 
   return response.json();
 }
+
+export const getSubmissionProgress = async (
+  submissionId: string
+): Promise<SubmissionProgress> => {
+  return apiFetch<SubmissionProgress>(
+    `/api/submissions/${submissionId}/status`
+  );
+};
