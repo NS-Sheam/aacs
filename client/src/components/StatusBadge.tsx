@@ -23,12 +23,12 @@ const statusConfigs: Record<
     border: 'border-amber-200',
     icon: Clock,
   },
-  running: {
-    label: 'Running',
+  active: {
+    label: 'Active',
     bg: 'bg-blue-50',
     text: 'text-blue-700',
     border: 'border-blue-200',
-    icon: Loader2,
+    icon: CheckCircle2 ,
   },
   completed: {
     label: 'Completed',
@@ -66,7 +66,7 @@ const statusConfigs: Record<
     <div
       className={`inline-flex items-center rounded-full border font-medium ${sizeClasses[size]} ${config.bg} ${config.border} ${config.text}`}
     >
-      <Icon className={`${iconSizes[size]} ${status === 'running' ? 'animate-spin' : ''}`} />
+      <Icon className={`${iconSizes[size]} ${status === 'active' ? 'animate-spin' : ''}`} />
       {config.label}
     </div>
   )
