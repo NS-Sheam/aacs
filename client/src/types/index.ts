@@ -7,3 +7,10 @@ export interface SubmissionProgress {
     totalChecks: number;
   };
 }
+
+export interface AssignmentJSON {
+  description: string
+  correct: string
+  number: string
+  message: string
+}
