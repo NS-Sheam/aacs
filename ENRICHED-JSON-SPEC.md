@@ -128,7 +128,14 @@ Threshold is configurable per assignment via `confidenceThreshold` field.
       "message": "not okay.",
       "checkType": "ui-position",
       "automationTier": 1,
-      "selectors": ["nav img", "nav svg", "nav .logo", "nav a:first-child", "header .logo", ".navbar-brand"],
+      "selectors": [
+        "nav img",
+        "nav svg",
+        "nav .logo",
+        "nav a:first-child",
+        "header .logo",
+        ".navbar-brand"
+      ],
       "requiredState": null,
       "confidence": 0.92
     },
@@ -159,7 +166,13 @@ Threshold is configurable per assignment via `confidenceThreshold` field.
       "message": "not okay.",
       "checkType": "ui-element",
       "automationTier": 1,
-      "selectors": [".banner", ".hero", "section:first-of-type", "[class*='banner']", "[class*='hero']"],
+      "selectors": [
+        ".banner",
+        ".hero",
+        "section:first-of-type",
+        "[class*='banner']",
+        "[class*='hero']"
+      ],
       "requiredState": null,
       "confidence": 0.85
     },
@@ -170,7 +183,12 @@ Threshold is configurable per assignment via `confidenceThreshold` field.
       "message": "not okay.",
       "checkType": "ui-position",
       "automationTier": 1,
-      "selectors": [".banner h1", ".hero h1", "section:first-of-type h1", "[class*='banner'] h1"],
+      "selectors": [
+        ".banner h1",
+        ".hero h1",
+        "section:first-of-type h1",
+        "[class*='banner'] h1"
+      ],
       "requiredState": null,
       "confidence": 0.88
     },
@@ -228,7 +246,12 @@ Threshold is configurable per assignment via `confidenceThreshold` field.
       "message": "not okay.",
       "checkType": "functional-auth",
       "automationTier": 2,
-      "selectors": ["nav img.avatar", "nav .user-profile", "nav .dropdown", ".navbar .profile-img"],
+      "selectors": [
+        "nav img.avatar",
+        "nav .user-profile",
+        "nav .dropdown",
+        ".navbar .profile-img"
+      ],
       "requiredState": { "authRole": "student" },
       "confidence": 0.88
     }
@@ -241,7 +264,11 @@ Threshold is configurable per assignment via `confidenceThreshold` field.
       "message": "not okay.",
       "checkType": "functional-crud",
       "automationTier": 2,
-      "selectors": ["table", ".applications-table", "[class*='application'] table"],
+      "selectors": [
+        "table",
+        ".applications-table",
+        "[class*='application'] table"
+      ],
       "requiredState": { "authRole": "student", "hasApplications": true },
       "confidence": 0.84
     },
@@ -252,7 +279,12 @@ Threshold is configurable per assignment via `confidenceThreshold` field.
       "message": "not okay.",
       "checkType": "conditional-logic",
       "automationTier": 3,
-      "selectors": ["button[data-action='pay']", ".pay-btn", "button:contains('Pay')", "a:contains('Pay')"],
+      "selectors": [
+        "button[data-action='pay']",
+        ".pay-btn",
+        "button:contains('Pay')",
+        "a:contains('Pay')"
+      ],
       "requiredState": {
         "authRole": "student",
         "applicationStatus": "pending",
