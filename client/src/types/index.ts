@@ -14,3 +14,13 @@ export interface AssignmentJSON {
   number: string
   message: string
 }
+
+export interface Assignment {
+  _id: string
+  description: string
+  correct: boolean
+  number: number
+  message: string
+  batch?: string
+  assignmentNo?: string
+}
