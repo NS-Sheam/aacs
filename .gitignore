@@ -1,0 +1,35 @@
+# Only project source directories should be eligible for commits.
+*
+!client/
+!client/**
+!server/
+!server/**
+!scripts/
+!scripts/**
+!.gitignore
+!README.md
+!ENRICHED-JSON-SPEC.md
+
+# Personal/local AI workspace and scratch material must stay local.
+isa_personal_files/
+.agents/
+**/.agents/
+**/prompts/
+**/rules/
+**/commands/
+**/scratch/
+**/temp/
+**/tmp/
+
+# Local machine and secret files.
+.DS_Store
+node_modules/
+dist/
+.next/
+server/outputs/
+*.log
+*.local
+.env
+.env.*
+!.env.example
+!.env.local.example
