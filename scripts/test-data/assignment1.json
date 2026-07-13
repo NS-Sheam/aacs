@@ -1,0 +1,101 @@
+﻿{
+  "assignmentMeta": {
+    "title": "Assignment 1 - Landing Page UI",
+    "batch": 12,
+    "type": "static-ui",
+    "version": 1
+  },
+  "sampleSubmissions": [
+    {
+      "studentName": "Nobonita Saha Niha",
+      "liveUrl": "https://nsniha.github.io/Assignment-01/",
+      "githubUrl": "https://github.com/NSniha/Assignment-01"
+    },
+    {
+      "studentName": "Nuhath khan lahif",
+      "liveUrl": "https://lahifkhan.github.io/landing-launchpad/",
+      "githubUrl": "https://github.com/lahifkhan/landing-launchpad"
+    },
+    {
+      "studentName": "Emon",
+      "liveUrl": "https://emon0426.github.io/ASSIGNMENT-001/",
+      "githubUrl": "https://github.com/Emon0426/ASSIGNMENT-001"
+    }
+  ],
+  "requirements": {
+    "navbar": {
+      "req-1": {
+        "description": "Logo is visible on the left side of the navbar.",
+        "number": "1",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "navbar logo",
+            "selectorHint": "nav img, .logo",
+            "expected": true,
+            "position": "left"
+          }
+        ],
+        "confidenceThreshold": 0.75
+      },
+      "req-2": {
+        "description": "Primary call-to-action button is visible in the navbar.",
+        "number": "1",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "navbar button",
+            "selectorHint": "nav button, nav a",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    },
+    "hero": {
+      "req-3": {
+        "description": "Hero heading is centered and visible above the fold.",
+        "number": "2",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "rules": [
+          {
+            "kind": "text",
+            "target": "hero heading",
+            "selectorHint": "h1, .hero h1",
+            "expected": true,
+            "position": "center"
+          }
+        ],
+        "confidenceThreshold": 0.75
+      },
+      "req-4": {
+        "description": "Hero section uses a background image or visual banner.",
+        "number": "1",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "hero background image",
+            "selectorHint": ".hero, header, section",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.7
+      }
+    }
+  }
+}
