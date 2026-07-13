@@ -71,7 +71,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/assignments",
+              "raw": "{{baseUrl}}/api/v1/assignments",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments"]
             },
@@ -92,7 +92,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/assignments",
+              "raw": "{{baseUrl}}/api/v1/assignments",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments"]
             },
@@ -107,7 +107,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/assignments",
+              "raw": "{{baseUrl}}/api/v1/assignments",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments"]
             }
@@ -118,7 +118,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/assignments?batch=12",
+              "raw": "{{baseUrl}}/api/v1/assignments?batch=12",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments"],
               "query": [{ "key": "batch", "value": "12" }]
@@ -130,7 +130,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/assignments?batch=12&assignmentNo=1",
+              "raw": "{{baseUrl}}/api/v1/assignments?batch=12&assignmentNo=1",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments"],
               "query": [
@@ -145,7 +145,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/assignments/batch/12/no/1",
+              "raw": "{{baseUrl}}/api/v1/assignments/batch/12/no/1",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments", "batch", "12", "no", "1"]
             }
@@ -156,7 +156,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/assignments/{{assignmentId}}",
+              "raw": "{{baseUrl}}/api/v1/assignments/{{assignmentId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments", "{{assignmentId}}"]
             }
@@ -173,7 +173,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/assignments/{{assignmentId}}",
+              "raw": "{{baseUrl}}/api/v1/assignments/{{assignmentId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments", "{{assignmentId}}"]
             },
@@ -194,7 +194,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/assignments/{{assignmentId}}/activate",
+              "raw": "{{baseUrl}}/api/v1/assignments/{{assignmentId}}/activate",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments", "{{assignmentId}}", "activate"]
             },
@@ -215,7 +215,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/assignments",
+              "raw": "{{baseUrl}}/api/v1/assignments",
               "host": ["{{baseUrl}}"],
               "path": ["api", "assignments"]
             },
@@ -255,7 +255,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/submissions",
+              "raw": "{{baseUrl}}/api/v1/submissions",
               "host": ["{{baseUrl}}"],
               "path": ["api", "submissions"]
             },
@@ -276,7 +276,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/submissions",
+              "raw": "{{baseUrl}}/api/v1/submissions",
               "host": ["{{baseUrl}}"],
               "path": ["api", "submissions"]
             },
@@ -297,7 +297,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/submissions",
+              "raw": "{{baseUrl}}/api/v1/submissions",
               "host": ["{{baseUrl}}"],
               "path": ["api", "submissions"]
             },
@@ -312,7 +312,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/submissions/{{submissionId}}/status",
+              "raw": "{{baseUrl}}/api/v1/submissions/{{submissionId}}/status",
               "host": ["{{baseUrl}}"],
               "path": ["api", "submissions", "{{submissionId}}", "status"]
             }
@@ -323,7 +323,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/submissions/{{submissionId}}",
+              "raw": "{{baseUrl}}/api/v1/submissions/{{submissionId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "submissions", "{{submissionId}}"]
             }
@@ -334,7 +334,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/submissions/assignment/{{assignmentId}}",
+              "raw": "{{baseUrl}}/api/v1/submissions/assignment/{{assignmentId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "submissions", "assignment", "{{assignmentId}}"]
             }
@@ -350,7 +350,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/results/{{submissionId}}",
+              "raw": "{{baseUrl}}/api/v1/results/{{submissionId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "results", "{{submissionId}}"]
             }
@@ -361,7 +361,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/results/{{submissionId}}/summary",
+              "raw": "{{baseUrl}}/api/v1/results/{{submissionId}}/summary",
               "host": ["{{baseUrl}}"],
               "path": ["api", "results", "{{submissionId}}", "summary"]
             }
@@ -378,7 +378,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/results/{{submissionId}}/export",
+              "raw": "{{baseUrl}}/api/v1/results/{{submissionId}}/export",
               "host": ["{{baseUrl}}"],
               "path": ["api", "results", "{{submissionId}}", "export"]
             },
@@ -398,7 +398,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/review-queue",
+              "raw": "{{baseUrl}}/api/v1/review-queue",
               "host": ["{{baseUrl}}"],
               "path": ["api", "review-queue"]
             }
@@ -409,7 +409,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/review-queue?submissionId={{submissionId}}",
+              "raw": "{{baseUrl}}/api/v1/review-queue?submissionId={{submissionId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "review-queue"],
               "query": [{ "key": "submissionId", "value": "{{submissionId}}" }]
@@ -427,7 +427,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/review-queue/{{reviewItemId}}",
+              "raw": "{{baseUrl}}/api/v1/review-queue/{{reviewItemId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "review-queue", "{{reviewItemId}}"]
             },
@@ -448,7 +448,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/review-queue/{{reviewItemId}}",
+              "raw": "{{baseUrl}}/api/v1/review-queue/{{reviewItemId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "review-queue", "{{reviewItemId}}"]
             },
@@ -469,7 +469,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/review-queue/{{reviewItemId}}",
+              "raw": "{{baseUrl}}/api/v1/review-queue/{{reviewItemId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "review-queue", "{{reviewItemId}}"]
             },
@@ -489,7 +489,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/audit/{{submissionId}}",
+              "raw": "{{baseUrl}}/api/v1/audit/{{submissionId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "audit", "{{submissionId}}"]
             }
