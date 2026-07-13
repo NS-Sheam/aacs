@@ -37,7 +37,7 @@ const AllAssignmentsPage = async ({
         search={params.search ?? ""}
       />
       {
-        assignments.length > 0 ? (
+        assignments?.length > 0 ? (
           <AssignmenTable data={assignments} />
         ) : (
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"> 
