@@ -53,9 +53,6 @@ export const getAssignments = async (params: SearchParams) => {
   if (params.assignment) query.set("assignment", params.assignment);
   if (params.search) query.set("search", params.search);
 
-  return apiFetch<{
-    assignments: Assignment[];
-    batches: string[];
-    assignmentNumbers: string[];
-  }>(`/api/v1/assignments?${query.toString()}`);
+  const res: { data: Assignment[] } = await apiFetch(`/api/v1/assignments?${query.toString()}`);
+  return res.data as Assignment[];
 }

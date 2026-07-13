@@ -95,7 +95,7 @@ export function ProgressBar({
   }
 
   const isCompleted = progress.status === 'completed'
-  const isRunning = progress.status === 'running'
+  const isRunning = progress.status === 'active'
 
   return (
     <div className="space-y-6">
@@ -161,7 +161,7 @@ export function ProgressBar({
           </p>
         )}
 
-        {progress.status === 'running' && (
+        {progress.status === 'active' && (
           <p className="text-blue-700">
             Running automated checks...
           </p>
