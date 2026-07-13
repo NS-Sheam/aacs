@@ -309,7 +309,8 @@ Status set back to "active"
 3. When instructor updates JSON → version bumps, enrichment re-runs automatically
 4. `needsClarification` results always go to review queue, never auto-committed
 5. Tier 3 results never auto-commit regardless of confidence score
-<<<<<<< HEAD
+   <<<<<<< HEAD
+   <<<<<<< HEAD
 
 # Enriched JSON Specification
 
@@ -486,5 +487,9 @@ Each checker can attach evidence to the stored result.
   "confidenceThreshold": 0.85
 }
 ```
+
 =======
->>>>>>> 880c464 (refector: assignment module)
+
+> > > > > > > # 880c464 (refector: assignment module)
+> > > > > > >
+> > > > > > > 000e1bc5a718befc89b7507e945d752801da7a49
