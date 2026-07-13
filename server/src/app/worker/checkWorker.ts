@@ -90,15 +90,15 @@ const worker = new Worker<CheckJobData>(
   },
 );
 
-worker.on("completed", (job) => {
+worker.on("completed", (job: Job) => {
   console.log(`Job ${job.id} completed successfully`);
 });
 
-worker.on("failed", (job, err) => {
+worker.on("failed", (job: Job | undefined, err: Error) => {
   console.error(`Job ${job?.id} failed: ${err.message}`);
 });
 
-worker.on("error", (err) => {
+worker.on("error", (err: Error) => {
   console.error("Worker error:", err);
 });
 
