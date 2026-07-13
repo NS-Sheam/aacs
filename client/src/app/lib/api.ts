@@ -1,4 +1,4 @@
-import { AssignmentJSON, SubmissionProgress } from "@/types";
+import { Assignment, AssignmentJSON, SubmissionProgress } from "@/types";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL;
@@ -39,3 +39,23 @@ export const getSubmissionProgress = async (
     `/api/submissions/${submissionId}/status`
   );
 };
+
+interface SearchParams {
+  batch?: string;
+  assignment?: string;
+  search?: string;
+}
+
+export const getAssignments = async (params: SearchParams) => {
+  const query = new URLSearchParams();
+
+  if (params.batch) query.set("batch", params.batch);
+  if (params.assignment) query.set("assignment", params.assignment);
+  if (params.search) query.set("search", params.search);
+
+  return apiFetch<{
+    assignments: Assignment[];
+    batches: string[];
+    assignmentNumbers: string[];
+  }>(`/assignments?${query.toString()}`);
+}
