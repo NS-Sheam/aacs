@@ -31,6 +31,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "bullmq": "^5.80.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
