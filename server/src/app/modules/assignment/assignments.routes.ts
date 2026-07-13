@@ -1,19 +1,23 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
+import { AssignmentController } from "./assignment.controller";
 const router = Router();
 
-// POST /api/v1/assignments — Nasib builds full logic Day 2
-router.post("/", async (req: Request, res: Response) => {
-  res.json({ message: "POST /api/assignments — coming Day 2" });
-});
+// Order matters — specific routes before parameterized ones
 
-// GET /api/v1/assignments
-router.get("/", async (req: Request, res: Response) => {
-  res.json({ message: "GET /api/assignments — coming Day 2" });
-});
+router.post("/", AssignmentController.create);
+router.get("/", AssignmentController.getAll);
 
-// GET /api/assignments/:id
-router.get("/:id", async (req: Request, res: Response) => {
-  res.json({ message: `GET /api/assignments/${req.params.id} — coming Day 2` });
-});
+// batch/no route MUST come before /:id
+router.get(
+  "/batch/:batch/no/:assignmentNo",
+  AssignmentController.getByBatchAndNo,
+);
+
+router.get("/:id", AssignmentController.getById);
+router.get("/:id/enriched", AssignmentController.getEnriched);
+
+router.patch("/:id/activate", AssignmentController.activate);
+router.patch("/:id/archive", AssignmentController.archive);
+router.patch("/:id", AssignmentController.update);
 
 export const assignmentsRoutes = router;
