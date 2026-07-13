@@ -26,7 +26,7 @@ export const apiFetch = async <T>(
 export const submitAssignment = async (
   assignment: AssignmentJSON
 ): Promise<{ assignmentId : string }> => {
-  return apiFetch<{ assignmentId : string }>("/api/submissions", {
+  return apiFetch<{ assignmentId : string }>("/api/v1/submissions", {
     method: "POST",
     body: JSON.stringify(assignment),
   });
@@ -36,7 +36,7 @@ export const getSubmissionProgress = async (
   submissionId: string
 ): Promise<SubmissionProgress> => {
   return apiFetch<SubmissionProgress>(
-    `/api/submissions/${submissionId}/status`
+    `/api/v1/submissions/${submissionId}/status`
   );
 };
 
@@ -57,5 +57,5 @@ export const getAssignments = async (params: SearchParams) => {
     assignments: Assignment[];
     batches: string[];
     assignmentNumbers: string[];
-  }>(`/assignments?${query.toString()}`);
+  }>(`/api/v1/assignments?${query.toString()}`);
 }

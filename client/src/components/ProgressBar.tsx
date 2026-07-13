@@ -25,7 +25,7 @@ export function ProgressBar({
     const pollStatus = async () => {
       try {
         const data = await apiFetch<SubmissionProgress>(
-          `/api/submissions/${submissionId}/status`
+          `/api/v1/submissions/${submissionId}/status`
         )
 
         setProgress(data)
