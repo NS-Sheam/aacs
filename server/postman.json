@@ -1,0 +1,501 @@
+{
+  "info": {
+    "name": "AACS — Devengers",
+    "description": "Automated Assignment Checking System — Programming Hero Hackathon",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "submissionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewItemId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Create assignment (Assignment 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.assignmentId) {",
+                  "  pm.collectionVariables.set('assignmentId', res.assignmentId);",
+                  "  console.log('assignmentId saved:', res.assignmentId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentNo\": 1,\n  \"batch\": 12,\n  \"title\": \"Focus App UI\",\n  \"figmaUrl\": \"https://figma.com/file/example\",\n  \"originalRequirements\": {\n    \"Navbar\": {\n      \"req-1\": {\n        \"description\": \"logo/website name on the left\",\n        \"number\": \"2\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      },\n      \"req-2\": {\n        \"description\": \"Signup button on the right\",\n        \"number\": \"2\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      }\n    },\n    \"Banner-Section\": {\n      \"req-1\": {\n        \"description\": \"Background Image\",\n        \"number\": \"4\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      },\n      \"req-2\": {\n        \"description\": \"Heading in the center\",\n        \"number\": \"3\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      },\n      \"req-3\": {\n        \"description\": \"Stay Focused button in the center\",\n        \"number\": \"3\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      }\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create assignment (Assignment 11)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentNo\": 11,\n  \"batch\": 12,\n  \"title\": \"Scholarship Portal\",\n  \"originalRequirements\": {\n    \"Layout-Structure\": {\n      \"req-1\": {\n        \"description\": \"Navbar (Not Logged In): Show Logo, Home, All Scholarships, Login, and Register Button.\",\n        \"number\": \"2\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      },\n      \"req-2\": {\n        \"description\": \"Navbar (Logged In): Show Logo, Home, All Scholarships, and User Profile Image with a dropdown.\",\n        \"number\": \"2\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      }\n    },\n    \"Authentication\": {\n      \"req-1\": {\n        \"description\": \"User Registration Page: A registration page with a form.\",\n        \"number\": \"3\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      },\n      \"req-2\": {\n        \"description\": \"User Login Page: A login page with a form.\",\n        \"number\": \"2\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      }\n    }\n  },\n  \"dbSeedConfig\": {\n    \"roles\": [\n      { \"role\": \"student\", \"email\": \"student@test.com\", \"password\": \"Test@1234\" },\n      { \"role\": \"moderator\", \"email\": \"moderator@test.com\", \"password\": \"Test@1234\" },\n      { \"role\": \"admin\", \"email\": \"admin@test.com\", \"password\": \"Test@1234\" }\n    ]\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Get all assignments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments"]
+            }
+          }
+        },
+        {
+          "name": "Get assignments — filter by batch",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments?batch=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments"],
+              "query": [{ "key": "batch", "value": "12" }]
+            }
+          }
+        },
+        {
+          "name": "Get assignments — filter by batch + assignmentNo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments?batch=12&assignmentNo=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments"],
+              "query": [
+                { "key": "batch", "value": "12" },
+                { "key": "assignmentNo", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get assignment by batch + no",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/batch/12/no/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "batch", "12", "no", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get assignment by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/{{assignmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "{{assignmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update assignment JSON",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/{{assignmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "{{assignmentId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Focus App UI — Updated\",\n  \"updatedBy\": \"instructor\",\n  \"originalRequirements\": {\n    \"Navbar\": {\n      \"req-1\": {\n        \"description\": \"logo/website name on the left\",\n        \"number\": \"2\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      }\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Activate assignment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/{{assignmentId}}/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "{{assignmentId}}", "activate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Duplicate assignment check (409 test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentNo\": 1,\n  \"batch\": 12,\n  \"title\": \"Duplicate test\",\n  \"originalRequirements\": {\n    \"Navbar\": {\n      \"req-1\": {\n        \"description\": \"logo on the left\",\n        \"number\": \"2\",\n        \"correct\": true,\n        \"message\": \"not okay.\"\n      }\n    }\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submissions",
+      "item": [
+        {
+          "name": "Create submission — public repo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.submissionId) {",
+                  "  pm.collectionVariables.set('submissionId', res.submissionId);",
+                  "  console.log('submissionId saved:', res.submissionId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/submissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "submissions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentId\": \"{{assignmentId}}\",\n  \"studentName\": \"Rafsan Siddiqui\",\n  \"liveUrl\": \"https://example.com\",\n  \"githubUrl\": \"https://github.com/octocat/Hello-World\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create submission — private repo (error test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/submissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "submissions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentId\": \"{{assignmentId}}\",\n  \"studentName\": \"Private Repo Student\",\n  \"liveUrl\": \"https://example.com\",\n  \"githubUrl\": \"https://github.com/devengers-private/nonexistent\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create submission — invalid GitHub URL (validation test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/submissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "submissions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentId\": \"{{assignmentId}}\",\n  \"studentName\": \"Bad URL Student\",\n  \"liveUrl\": \"https://example.com\",\n  \"githubUrl\": \"not-a-github-url\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get submission status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/submissions/{{submissionId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "submissions", "{{submissionId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get submission by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/submissions/{{submissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "submissions", "{{submissionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get submissions by assignment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/submissions/assignment/{{assignmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "submissions", "assignment", "{{assignmentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Results",
+      "item": [
+        {
+          "name": "Get results by submission",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/results/{{submissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "results", "{{submissionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get results summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/results/{{submissionId}}/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "results", "{{submissionId}}", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Export results as instructor JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/results/{{submissionId}}/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "results", "{{submissionId}}", "export"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Review Queue",
+      "item": [
+        {
+          "name": "Get all pending items",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/review-queue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "review-queue"]
+            }
+          }
+        },
+        {
+          "name": "Get pending items by submission",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/review-queue?submissionId={{submissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "review-queue"],
+              "query": [{ "key": "submissionId", "value": "{{submissionId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Resolve — mark pass",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/review-queue/{{reviewItemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "review-queue", "{{reviewItemId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"pass\",\n  \"resolvedBy\": \"instructor\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Resolve — mark fail",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/review-queue/{{reviewItemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "review-queue", "{{reviewItemId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"fail\",\n  \"resolvedBy\": \"instructor\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Resolve — invalid decision (400 test)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/review-queue/{{reviewItemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "review-queue", "{{reviewItemId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"maybe\",\n  \"resolvedBy\": \"instructor\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Log",
+      "item": [
+        {
+          "name": "Get audit trail by submission",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/audit/{{submissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audit", "{{submissionId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
