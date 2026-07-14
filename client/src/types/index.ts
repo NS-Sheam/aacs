@@ -41,3 +41,11 @@ export interface GitHubCheckResult {
   allCommitsSameDay: boolean;
   error?: string;
 }
+
+export interface AssignmentUpload{
+  title: string,
+  batch: number,
+  assignmentNo: number,
+  figmaUrl?: string,
+  originalRequirements: Record<string, any>
+}
