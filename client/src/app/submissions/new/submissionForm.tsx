@@ -41,7 +41,7 @@ export default function SubmissionForm({
             const res = await submitAssignment(form);
             setLoading(false);
 
-            router.push(`/submissions/${res?.data?.assignmentId}`); //TODO: Change to submissionId when backend is updated
+            router.push(`/submissions/${(res?.data?._id)?.toString()}`);
         } catch (err: any) {
             setError(err.message);
             setLoading(false);
