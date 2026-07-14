@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import catchAsync from "../../helpers/catchAsync";
 import sendResponse from "../../helpers/sendResponse";
 import { AssignmentService } from "./assgnment.service";
+import { enrichAssignment } from "./enrichment.service";
 
 // POST /api/assignments
 const createAssignment = catchAsync(async (req: Request, res: Response) => {
@@ -112,21 +113,16 @@ const archive = catchAsync(async (req: Request, res: Response) => {
 
 // GET /api/assignments/:id/enriched
 const getEnriched = catchAsync(async (req: Request, res: Response) => {
-  const assignment = await AssignmentService.getEnrichedRequirements(
-    req.params.id as string,
-  );
+  const result = await enrichAssignment(req.params.id as string);
 
   sendResponse(res, {
     status: StatusCodes.OK,
     success: true,
     message: "Enriched requirements retrieved successfully",
-    data: {
-      enrichedRequirements: assignment?.enrichedRequirements,
-      confidenceThreshold: assignment?.confidenceThreshold,
-      status: assignment?.status,
-    },
+    data: result,
   });
 });
+
 // GET /api/assignments/:id/enrichment-status
 const getEnrichmentStatus = catchAsync(async (req: Request, res: Response) => {
   const status = await AssignmentService.getEnrichmentStatus(
