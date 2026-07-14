@@ -26,7 +26,7 @@ export const apiFetch = async <T>(
 
 export const submitAssignment = async (
   payload: SubmissionAssignment
-): Promise<{success: boolean; message?: string; data: { assignmentId: string }}> => {
+): Promise<{success: boolean; message?: string; data: { _id: string }}> => {
   return apiFetch("/api/v1/submissions", {
     method: "POST",
     body: JSON.stringify(payload),
