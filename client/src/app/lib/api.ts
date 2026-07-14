@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Assignment, AssignmentJSON, AssignmentUpload, SubmissionAssignment, SubmissionProgress } from "@/types";
 
 const API_URL =
@@ -62,3 +63,7 @@ export const createAssignment=async (assignment: AssignmentUpload): Promise<{ su
     body: JSON.stringify(assignment),
   });
 } 
+
+export const getSubmissionStatus = async (submissionId: string): Promise<any> => {
+  return apiFetch(`/api/v1/submissions/${submissionId}/status`);
+}
