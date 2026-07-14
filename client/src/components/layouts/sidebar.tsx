@@ -10,6 +10,7 @@ const navItems = [
   { href: '/upload', label: 'Upload', icon: Upload, description: 'New assignment' },
   { href: '/review', label: 'Review Queue', icon: CheckCircle, description: 'Pending approval' },
   { href: '/export', label: 'Export', icon: Download, description: 'Download results' },
+  { href: '/assignments', label: 'Assignments', icon: ClipboardList, description: 'Browse all assignments' },
 ]
 
  const Sidebar = () => {

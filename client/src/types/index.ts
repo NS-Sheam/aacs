@@ -1,0 +1,31 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type SubmissionStatus = 'queued' | 'active' | 'completed' | 'error'
+
+export interface SubmissionProgress {
+  status: SubmissionStatus;
+  progress: {
+    completedChecks: number;
+    totalChecks: number;
+  };
+}
+
+export interface AssignmentJSON {
+  description: string
+  correct: string
+  number: string
+  message: string
+}
+
+export interface Assignment {
+  _id: string
+  title: string
+  batch: number
+  assignmentNo: number
+  status: string
+  version: number
+  figmaUrl: string
+  originalRequirements: Record<string, any>
+  updatedAt: string
+  submissionCount?: number
+  
+}
