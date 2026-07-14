@@ -93,6 +93,16 @@ const createAssignment = async (data: CreateAssignmentDTO) => {
     version: 1,
   });
 
+  // Trigger Gemini enrichment in background — non-blocking
+
+  import("./enrichment.service").then(({ enrichAssignment }) => {
+    enrichAssignment(assignment._id.toString())
+      .then(() => console.log(`Enrichment done: ${assignment._id}`))
+      .catch((err) =>
+        console.error("Background enrichment error:", err.message),
+      );
+  });
+
   return assignment;
 };
 
