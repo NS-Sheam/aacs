@@ -29,3 +29,15 @@ export interface Assignment {
   submissionCount?: number
   
 }
+
+export interface GitHubCheckResult {
+  repoExists: boolean;
+  isPrivate: boolean;
+  totalCommits: number;
+  lastCommitDate: string | null;
+  lastCommitMessage: string | null;
+  hasReadme: boolean;
+  commitSpreadFlag: boolean;
+  allCommitsSameDay: boolean;
+  error?: string;
+}
