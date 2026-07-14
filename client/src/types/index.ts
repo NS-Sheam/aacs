@@ -49,3 +49,11 @@ export interface AssignmentUpload{
   figmaUrl?: string,
   originalRequirements: Record<string, any>
 }
+
+export interface SubmissionAssignment {
+  assignmentId: string;
+  studentName: string;
+  liveUrl: string;
+  githubUrl: string;
+        
+}
