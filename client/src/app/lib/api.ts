@@ -1,4 +1,4 @@
-import { Assignment, AssignmentJSON, SubmissionProgress } from "@/types";
+import { Assignment, AssignmentJSON, AssignmentUpload, SubmissionProgress } from "@/types";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL;
@@ -56,3 +56,9 @@ export const getAssignments = async (params: SearchParams) => {
   const res: { data: Assignment[] } = await apiFetch(`/api/v1/assignments?${query.toString()}`);
   return res.data as Assignment[];
 }
+export const createAssignment=async (assignment: AssignmentUpload): Promise<{ success: boolean; message?: string; data: { assignmentId: string ,assignment: Assignment} }> => {
+  return apiFetch("/api/v1/assignments", {
+    method: "POST",
+    body: JSON.stringify(assignment),
+  });
+} 

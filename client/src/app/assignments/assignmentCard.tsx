@@ -157,10 +157,10 @@ export default function AssignmentCard({
   {/* Footer */}
   <div className="mt-6 flex items-center gap-3">
 
-    <button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 font-semibold text-white shadow-md transition hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg">
+    <Link href={`/submissions/new?assignmentId=${_id}`} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 font-semibold text-white shadow-md transition hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg">
       <Plus className="h-4 w-4" />
       Add Submission
-    </button>
+    </Link>
 
     <button className="rounded-xl border border-slate-200 bg-white p-3 text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600">
       <Check className="h-5 w-5" />
