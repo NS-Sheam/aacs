@@ -102,3 +102,13 @@ export function getDashboardStats(
     },
   ];
 }
+
+export  const formatDate = (date?: string | null) => {
+    if (!date) return "--";
+
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };

@@ -7,8 +7,9 @@ import { exportAssignment } from "../lib/api";
 import JsonPreview from "./preview";
 
 
-export default function ExportForm() {
-  const [submissionId, setSubmissionId] = useState("");
+export default function ExportForm({id}: {id: string}) {
+  console.log("ExportForm received id:", id);
+  const [submissionId, setSubmissionId] = useState(id || "");
   const [result, setResult] = useState<any>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

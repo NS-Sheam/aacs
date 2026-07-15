@@ -1,6 +1,8 @@
 import ExportForm from "./exportForm";
 
-export default function ExportPage() {
+export default async function ExportPage({searchParams}: {searchParams: {submissionId: string}}) {
+  const {submissionId} = await searchParams;
+
   return (
     <main className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100">
       <div className="mx-auto max-w-6xl px-8 py-14">
@@ -20,7 +22,7 @@ export default function ExportPage() {
           </p>
         </div>
 
-        <ExportForm />
+        <ExportForm id={submissionId} />
       </div>
     </main>
   );

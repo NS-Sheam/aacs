@@ -96,3 +96,15 @@ export const resolveQueueItem=async (itemId: string, decision: "pass" | "fail", 
     body: JSON.stringify({ decision, resolvedBy }),
   });
 }
+
+export const getSubmissionById=async (submissionId: string): Promise<any> => {
+  return apiFetch(`/api/v1/submissions/${submissionId}`);
+}
+
+export const summaryResults=async (submissionId: string): Promise<any> => {
+  return apiFetch(`/api/v1/results/${submissionId}/summary`);
+}
+
+export const getResultBySubmissionId=async (submissionId: string): Promise<any> => {
+  return apiFetch(`/api/v1/results/${submissionId}`);
+}
