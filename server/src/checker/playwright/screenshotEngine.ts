@@ -24,12 +24,10 @@ export async function takeResponsiveScreenshots(
     "screenshots",
     submissionId,
   );
-
-  // Create output directory
   fs.mkdirSync(outputDir, { recursive: true });
 
   const browser = await chromium.launch({ headless: true });
-  const results: Partial<ScreenshotResult> = {};
+  const result: Partial<ScreenshotResult> = {};
 
   for (const [viewport, size] of Object.entries(VIEWPORTS)) {
     const page = await browser.newPage();
@@ -37,24 +35,20 @@ export async function takeResponsiveScreenshots(
 
     try {
       await page.goto(liveUrl, { waitUntil: "networkidle", timeout: 15000 });
-      await page.waitForTimeout(1000); // let animations settle
+      await page.waitForTimeout(1000);
 
       const screenshotPath = path.join(outputDir, `${viewport}.png`);
-      await page.screenshot({
-        path: screenshotPath,
-        fullPage: true,
-      });
-
-      results[viewport as keyof ScreenshotResult] = screenshotPath;
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+      result[viewport as keyof ScreenshotResult] = screenshotPath;
       console.log(`Screenshot saved: ${screenshotPath}`);
     } catch (err: any) {
-      console.error(`Screenshot failed for ${viewport}: ${err.message}`);
-      results[viewport as keyof ScreenshotResult] = "";
+      console.error(`Screenshot failed [${viewport}]: ${err.message}`);
+      result[viewport as keyof ScreenshotResult] = "";
     } finally {
       await page.close();
     }
   }
 
   await browser.close();
-  return results as ScreenshotResult;
+  return result as ScreenshotResult;
 }
