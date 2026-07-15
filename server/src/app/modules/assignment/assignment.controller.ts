@@ -122,6 +122,29 @@ const getEnriched = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+// GET /api/assignments/:id/enrichment-status
+const getEnrichmentStatus = catchAsync(async (req: Request, res: Response) => {
+  const status = await AssignmentService.getEnrichmentStatus(
+    req.params.id as string,
+  );
+
+  if (!status) {
+    sendResponse(res, {
+      status: StatusCodes.NOT_FOUND,
+      success: false,
+      message: "Assignment not found",
+      data: null,
+    });
+    return;
+  }
+
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    success: true,
+    message: "Enrichment status retrieved successfully",
+    data: status,
+  });
+});
 
 export const AssignmentController = {
   create: createAssignment,
@@ -132,4 +155,5 @@ export const AssignmentController = {
   activate: activate,
   archive: archive,
   getEnriched: getEnriched,
+  getEnrichmentStatus: getEnrichmentStatus,
 };
