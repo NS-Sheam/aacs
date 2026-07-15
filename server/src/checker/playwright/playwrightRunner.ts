@@ -4,18 +4,25 @@ import {
   checkElementCount,
   checkElementPosition,
   CheckResult,
+  checkTextContent,
 } from "./ruleEvaluator";
 
 export interface RunnerResult {
-  section: string;
-  reqKey: string;
-  description: string;
-  marks: number;
-  checkType: string;
-  automationTier: number;
-  confidence: number;
-  needsClarification: boolean;
-  result: CheckResult;
+  section: string; // "Navbar"
+  reqKey: string; // "req-1"
+  description: string; // "logo/website name on the left"
+  marks: number; // 2
+  checkType: string; // "ui-position"
+  automationTier: number; // 1
+  confidence: number; // 0.92
+  needsClarification: boolean; // false
+  result: {
+    pass: boolean;
+    selectorUsed?: string;
+    actualValue?: string | number;
+    expectedValue?: string | number;
+    error?: string;
+  };
 }
 
 // SPA-safe page navigation
@@ -52,6 +59,9 @@ async function evaluateRule(page: Page, req: any): Promise<CheckResult> {
     case "ui-position":
       const position = requiredState.position || "center";
       return checkElementPosition(page, selectors, position);
+    case "ui-text":
+      const text = req.requiredState?.text || req.description;
+      return checkTextContent(page, selectors, text);
 
     default:
       return {
@@ -134,6 +144,29 @@ export async function runTier1Checks(
           needsClarification: false,
           result,
         });
+      }
+      // Process sub_req keys
+      for (const [reqKey, req] of Object.entries(reqs as Record<string, any>)) {
+        const r = req as any;
+        for (const [subKey, subReq] of Object.entries(r)) {
+          if (!subKey.startsWith("sub_req")) continue;
+          const sub = subReq as any;
+          if (sub.automationTier !== 1) continue;
+          if (sub.needsClarification) continue;
+
+          const result = await evaluateRule(page, sub);
+          results.push({
+            section,
+            reqKey: `${reqKey}.${subKey}`,
+            description: sub.description,
+            marks: parseInt(String(sub.number)) || 0,
+            checkType: sub.checkType,
+            automationTier: sub.automationTier,
+            confidence: sub.confidence || 1,
+            needsClarification: false,
+            result,
+          });
+        }
       }
     }
   } finally {
