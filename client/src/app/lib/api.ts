@@ -79,3 +79,17 @@ export const getAssignmentById=async (assignmentId: string): Promise<any> => {
 export const getEnrichedAssignmentById=async (assignmentId: string): Promise<any> => {
   return apiFetch(`/api/v1/assignments/${assignmentId}/enriched`);
 }
+
+export const getReviewQueueItems=async (submissionId?: string): Promise<any> => {
+  const url = submissionId
+    ? `/api/v1/review-queue?submissionId=${submissionId}`
+    : `/api/v1/review-queue`;
+  return apiFetch(url);
+}
+
+export const resolveQueueItem=async (itemId: string, decision: "pass" | "fail", resolvedBy: string): Promise<any> => {
+  return apiFetch(`/api/v1/review-queue/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ decision, resolvedBy }),
+  });
+}
