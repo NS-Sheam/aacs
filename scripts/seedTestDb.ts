@@ -11,6 +11,15 @@ const { Assignment } = requireFromServer(
 const { Submission } = requireFromServer(
   "./src/app/modules/submission/submission.model",
 );
+const { Result } = requireFromServer(
+  "./src/app/modules/result/result.model",
+);
+const { ReviewQueue } = requireFromServer(
+  "./src/app/modules/reviewQueue/reviewQueue.model",
+);
+const { AuditLog } = requireFromServer(
+  "./src/app/modules/auditLog/auditLog.model",
+);
 
 dotenv.config({ path: ".env" });
 
@@ -57,6 +66,9 @@ async function seed() {
       await Promise.all([
         Assignment.deleteMany({}),
         Submission.deleteMany({}),
+        Result.deleteMany({}),
+        ReviewQueue.deleteMany({}),
+        AuditLog.deleteMany({}),
       ]);
       console.log("Collections cleared via --reset");
     }
@@ -74,6 +86,34 @@ async function seed() {
         confidenceThreshold: 0.75,
         status: "active",
         version: 1,
+        enrichedRequirements: {
+          "Navbar": {
+            "req-1": {
+              "description": "logo/website name on the left",
+              "number": "2",
+              "correct": true,
+              "message": "not okay.",
+              "checkType": "ui-position",
+              "automationTier": 1,
+              "selectors": ["nav .logo", "header .logo", "nav img", "nav svg"],
+              "requiredState": { "position": "left" },
+              "confidence": 0.9,
+              "needsClarification": false
+            },
+            "req-2": {
+              "description": "Signup button on the right",
+              "number": "2",
+              "correct": true,
+              "message": "not okay.",
+              "checkType": "ui-position",
+              "automationTier": 1,
+              "selectors": ["nav button.signup", "a[href*='signup']"],
+              "requiredState": { "position": "right" },
+              "confidence": 0.5,
+              "needsClarification": false
+            }
+          }
+        }
       },
       { returnDocument: "after", upsert: true },
     );
