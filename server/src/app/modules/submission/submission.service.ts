@@ -37,6 +37,42 @@ const createSubmission = async (
   return submission;
 };
 
+// Bulk create — portal submits many students at once.
+// Per-item try/catch is intentional: one bad row must not abort the batch.
+const createBulkSubmissions = async (
+  submissions: CreateSubmissionDTO[],
+): Promise<{
+  success: Array<{ studentName?: string; submissionId: string }>;
+  failed: Array<{ studentName?: string; error: string }>;
+}> => {
+  if (!Array.isArray(submissions) || submissions.length === 0) {
+    throw new Error("submissions must be a non-empty array");
+  }
+  if (submissions.length > 50) {
+    throw new Error("Maximum 50 submissions per bulk request");
+  }
+
+  const success: Array<{ studentName?: string; submissionId: string }> = [];
+  const failed: Array<{ studentName?: string; error: string }> = [];
+
+  for (const sub of submissions) {
+    try {
+      const created = await createSubmission(sub);
+      success.push({
+        studentName: sub.studentName,
+        submissionId: created._id.toString(),
+      });
+    } catch (err) {
+      failed.push({
+        studentName: sub.studentName,
+        error: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
+  return { success, failed };
+};
+
 // Get submission status + progress
 const getSubmissionStatus = async (
   id: string,
@@ -74,6 +110,7 @@ const getSubmissionById = async (id: string): Promise<ISubmission | null> => {
 
 export const SubmissionServices = {
   create: createSubmission,
+  createBulk: createBulkSubmissions,
   getStatus: getSubmissionStatus,
   getByAssignment: getSubmissionByAssignment,
   getById: getSubmissionById,

@@ -1,11 +1,15 @@
 import { Router } from "express";
-import { resultController } from "./result.controller";
+import { ResultController } from "./result.controller";
 
 const router = Router();
 
-// Order matters — specific routes before parameterized ones
-router.get("/:submissionId/summary", resultController.getSummary);
-router.get("/:submissionId/export", resultController.exportJSON);
-router.get("/:submissionId", resultController.getBySubmission);
+// Support both URL patterns and HTTP methods for maximum compatibility
+router.post("/export/:submissionId", ResultController.exportJSON);
+router.get("/export/:submissionId", ResultController.exportJSON);
+router.post("/:submissionId/export", ResultController.exportJSON);
+router.get("/:submissionId/export", ResultController.exportJSON);
+
+router.get("/:submissionId/summary", ResultController.getSummary);
+router.get("/:submissionId", ResultController.getBySubmission);
 
 export const resultsRoutes = router;

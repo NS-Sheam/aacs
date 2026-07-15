@@ -17,6 +17,20 @@ const createSubmission = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// POST /api/submissions/bulk
+const createBulkSubmissions = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await SubmissionServices.createBulk(req.body.submissions);
+
+    sendResponse(res, {
+      status: StatusCodes.CREATED,
+      success: true,
+      message: `${result.success.length} queued · ${result.failed.length} failed`,
+      data: result,
+    });
+  },
+);
+
 // GET /api/submissions/:id/status
 const getSubmissionStatus = catchAsync(async (req: Request, res: Response) => {
   const result = await SubmissionServices.getStatus(req.params.id as string);
@@ -59,6 +73,7 @@ const getSubmissionById = catchAsync(async (req: Request, res: Response) => {
 
 export const SubmissionController = {
   create: createSubmission,
+  createBulk: createBulkSubmissions,
   getStatus: getSubmissionStatus,
   getByAssignment: getSubmissionByAssignment,
   getById: getSubmissionById,
