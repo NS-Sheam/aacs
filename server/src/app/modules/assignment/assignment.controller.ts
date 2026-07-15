@@ -122,7 +122,6 @@ const getEnriched = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 // GET /api/assignments/:id/enrichment-status
 const getEnrichmentStatus = catchAsync(async (req: Request, res: Response) => {
   const status = await AssignmentService.getEnrichmentStatus(
