@@ -71,3 +71,11 @@ export const getSubmissionStatus = async (submissionId: string): Promise<any> =>
 export const exportAssignment=async (submissionId: string): Promise<any> => {
   return apiFetch(`/api/v1/results/${submissionId}/export`);
 }
+
+export const getAssignmentById=async (assignmentId: string): Promise<any> => {
+  return apiFetch(`/api/v1/assignments/${assignmentId}`);
+}
+
+export const getEnrichedAssignmentById=async (assignmentId: string): Promise<any> => {
+  return apiFetch(`/api/v1/assignments/${assignmentId}/enriched`);
+}
