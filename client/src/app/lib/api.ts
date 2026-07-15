@@ -67,3 +67,7 @@ export const createAssignment=async (assignment: AssignmentUpload): Promise<{ su
 export const getSubmissionStatus = async (submissionId: string): Promise<any> => {
   return apiFetch(`/api/v1/submissions/${submissionId}/status`);
 }
+
+export const exportAssignment=async (submissionId: string): Promise<any> => {
+  return apiFetch(`/api/v1/results/${submissionId}/export`);
+}
