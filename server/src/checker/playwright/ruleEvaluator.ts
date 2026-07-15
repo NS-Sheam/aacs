@@ -121,3 +121,34 @@ export async function checkElementPosition(
     };
   });
 }
+
+// Check if element contains specific text
+export async function checkTextContent(
+  page: Page,
+  selectors: string[],
+  expectedText: string,
+): Promise<CheckResult> {
+  return withRetry(async () => {
+    for (const selector of selectors) {
+      try {
+        const el = await page.$(selector);
+        if (!el) continue;
+        const text = await el.textContent();
+        if (text && text.toLowerCase().includes(expectedText.toLowerCase())) {
+          return {
+            pass: true,
+            selectorUsed: selector,
+            actualValue: text.trim(),
+            expectedValue: expectedText,
+          };
+        }
+      } catch {
+        continue;
+      }
+    }
+    return {
+      pass: false,
+      error: `Text "${expectedText}" not found. Tried: ${selectors.join(", ")}`,
+    };
+  });
+}
