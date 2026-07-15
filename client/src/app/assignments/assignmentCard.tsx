@@ -166,7 +166,7 @@ export default function AssignmentCard({
       <Check className="h-5 w-5" />
     </button>
 
-    <Link href={figmaUrl || "#"} className="rounded-xl border border-slate-200 bg-white p-3 text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600" target="_blank">
+    <Link href={`/assignments/${_id}`} className="rounded-xl border border-slate-200 bg-white p-3 text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600">
       <ExternalLink className="h-5 w-5" />
     </Link>
 
