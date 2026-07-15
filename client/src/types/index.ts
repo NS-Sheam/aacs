@@ -70,3 +70,35 @@ export interface ReviewItem {
   status: string;
   decision?: string;
 }
+
+export interface Summary{
+  totalScore: number;
+  maxScore: number;
+  passed: number;
+  failed: number;
+  flagged: number;
+  autoCommitted: number;
+}
+
+
+export interface SubmissionData {
+  progress: Progress
+  _id: string
+  assignmentId: string
+  studentName: string
+  liveUrl: string
+  githubUrl: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  __v: number
+  autoCommitted: number
+  flagged: number
+  maxScore: number
+  totalScore: number
+}
+
+export interface Progress {
+  completedChecks: number
+  totalChecks: number
+}
