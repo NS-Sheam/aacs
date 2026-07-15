@@ -57,3 +57,16 @@ export interface SubmissionAssignment {
   githubUrl: string;
         
 }
+
+export interface ReviewItem {
+  _id: string;
+  section: string;
+  reqKey: string;
+  description: string;
+  marks: number;
+  automatedResult: string;
+  aiReasoning: string;
+  confidence: number;
+  status: string;
+  decision?: string;
+}
