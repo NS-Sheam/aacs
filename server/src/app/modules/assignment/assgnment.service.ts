@@ -207,6 +207,21 @@ const getEnrichedRequirements = async (id: string) => {
   return assignment;
 };
 
+// Lightweight enrichment status — frontend polls this to know when
+// enrichment has completed without pulling the heavy enriched payload.
+const getEnrichmentStatus = async (id: string) => {
+  const assignment = await Assignment.findById(id).select(
+    "status enrichedRequirements version",
+  );
+  if (!assignment) return null;
+
+  return {
+    enrichmentComplete: !!assignment.enrichedRequirements,
+    status: assignment.status,
+    version: assignment.version,
+  };
+};
+
 export const AssignmentService = {
   create: createAssignment,
   getAll: getAllAssignments,
@@ -217,4 +232,5 @@ export const AssignmentService = {
   archive: archive,
   saveEnriched: saveEnriched,
   getEnrichedRequirements: getEnrichedRequirements,
+  getEnrichmentStatus: getEnrichmentStatus,
 };

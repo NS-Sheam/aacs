@@ -15,6 +15,7 @@ router.get(
 
 router.get("/:id", AssignmentController.getById);
 router.get("/:id/enriched", AssignmentController.getEnriched);
+router.get("/:id/enrichment-status", AssignmentController.getEnrichmentStatus);
 
 router.patch("/:id/activate", AssignmentController.activate);
 router.patch("/:id/archive", AssignmentController.archive);

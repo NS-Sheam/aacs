@@ -1,8 +1,11 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
+import { ResultController } from "./result.controller";
+
 const router = Router();
 
-router.post("/export/:submissionId", async (req: Request, res: Response) => {
-  res.json({ message: `Export for ${req.params.submissionId} — coming Day 4` });
-});
+// Order matters — specific routes before parameterized ones
+router.post("/export/:submissionId", ResultController.exportJSON);
+router.get("/:submissionId/summary", ResultController.getSummary);
+router.get("/:submissionId", ResultController.getBySubmission);
 
 export const resultsRoutes = router;
