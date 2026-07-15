@@ -69,7 +69,10 @@ export const getSubmissionStatus = async (submissionId: string): Promise<any> =>
 }
 
 export const exportAssignment=async (submissionId: string): Promise<any> => {
-  return apiFetch(`/api/v1/results/${submissionId}/export`);
+  return apiFetch(`/api/v1/results/export/${submissionId}`,{
+    method: "POST",
+    body: JSON.stringify({ submissionId }),
+  });
 }
 
 export const getAssignmentById=async (assignmentId: string): Promise<any> => {

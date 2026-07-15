@@ -25,6 +25,7 @@ export default function ExportForm() {
 
     try {
        const res = await exportAssignment(submissionId.trim());
+       console.log("Export result:", res);
       setResult(res?.data);
     } catch (e: any) {
       setError(e.message);
