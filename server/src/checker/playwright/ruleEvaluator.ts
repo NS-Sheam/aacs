@@ -6,29 +6,27 @@ export interface CheckResult {
   actualValue?: string | number;
   expectedValue?: string | number;
   error?: string;
-  retries?: number;
 }
 
-// Retry wrapper — 3 attempts with 1s backoff
+// Retry wrapper — 3 attempts, exponential backoff
 async function withRetry<T>(
   fn: () => Promise<T>,
-  maxRetries = 3,
+  retries = 3,
   delayMs = 1000,
 ): Promise<T> {
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  let lastErr: Error | null = null;
+  for (let i = 1; i <= retries; i++) {
     try {
       return await fn();
     } catch (err: any) {
-      lastError = err;
-      if (attempt < maxRetries) {
-        await new Promise((r) => setTimeout(r, delayMs * attempt));
-      }
+      lastErr = err;
+      if (i < retries) await new Promise((r) => setTimeout(r, delayMs * i));
     }
   }
-  throw lastError;
+  throw lastErr;
 }
 
+// Check if element exists and is visible
 export async function checkElementExists(
   page: Page,
   selectors: string[],
@@ -36,10 +34,9 @@ export async function checkElementExists(
   return withRetry(async () => {
     for (const selector of selectors) {
       try {
-        const element = await page.$(selector);
-        if (element) {
-          const isVisible = await element.isVisible();
-          if (isVisible) return { pass: true, selectorUsed: selector };
+        const el = await page.$(selector);
+        if (el && (await el.isVisible())) {
+          return { pass: true, selectorUsed: selector };
         }
       } catch {
         continue;
@@ -47,11 +44,12 @@ export async function checkElementExists(
     }
     return {
       pass: false,
-      error: `No visible element found. Tried: ${selectors.join(", ")}`,
+      error: `No visible element found. Selectors tried: ${selectors.join(", ")}`,
     };
   });
 }
 
+// Check element count
 export async function checkElementCount(
   page: Page,
   selectors: string[],
@@ -60,14 +58,16 @@ export async function checkElementCount(
   return withRetry(async () => {
     for (const selector of selectors) {
       try {
-        const elements = await page.$$(selector);
-        const visible = await Promise.all(elements.map((e) => e.isVisible()));
-        const visibleCount = visible.filter(Boolean).length;
-        if (visibleCount > 0 || elements.length > 0) {
+        const els = await page.$$(selector);
+        const visible = (
+          await Promise.all(els.map((e) => e.isVisible()))
+        ).filter(Boolean).length;
+
+        if (els.length > 0) {
           return {
-            pass: visibleCount === expected,
+            pass: visible === expected,
             selectorUsed: selector,
-            actualValue: visibleCount,
+            actualValue: visible,
             expectedValue: expected,
           };
         }
@@ -77,11 +77,12 @@ export async function checkElementCount(
     }
     return {
       pass: false,
-      error: `No elements found. Tried: ${selectors.join(", ")}`,
+      error: `No elements found. Selectors tried: ${selectors.join(", ")}`,
     };
   });
 }
 
+// Check element position — left / center / right
 export async function checkElementPosition(
   page: Page,
   selectors: string[],
@@ -90,19 +91,18 @@ export async function checkElementPosition(
   return withRetry(async () => {
     for (const selector of selectors) {
       try {
-        const element = await page.$(selector);
-        if (!element) continue;
-        const box = await element.boundingBox();
+        const el = await page.$(selector);
+        if (!el) continue;
+        const box = await el.boundingBox();
         if (!box) continue;
 
-        const viewportWidth = page.viewportSize()?.width || 1280;
-        const elementCenter = box.x + box.width / 2;
-        const leftThird = viewportWidth / 3;
-        const rightThird = (viewportWidth / 3) * 2;
+        const vw = page.viewportSize()?.width || 1280;
+        const center = box.x + box.width / 2;
+        const third = vw / 3;
 
         let detected: "left" | "center" | "right";
-        if (elementCenter < leftThird) detected = "left";
-        else if (elementCenter > rightThird) detected = "right";
+        if (center < third) detected = "left";
+        else if (center > third * 2) detected = "right";
         else detected = "center";
 
         return {
@@ -117,7 +117,7 @@ export async function checkElementPosition(
     }
     return {
       pass: false,
-      error: `Could not determine position. Tried: ${selectors.join(", ")}`,
+      error: `Could not determine position. Selectors tried: ${selectors.join(", ")}`,
     };
   });
 }
