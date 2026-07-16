@@ -3,8 +3,12 @@ import { ResultController } from "./result.controller";
 
 const router = Router();
 
-// Order matters — specific routes before parameterized ones
+// Support both URL patterns and HTTP methods for maximum compatibility
 router.post("/export/:submissionId", ResultController.exportJSON);
+router.get("/export/:submissionId", ResultController.exportJSON);
+router.post("/:submissionId/export", ResultController.exportJSON);
+router.get("/:submissionId/export", ResultController.exportJSON);
+
 router.get("/:submissionId/summary", ResultController.getSummary);
 router.get("/:submissionId", ResultController.getBySubmission);
 
