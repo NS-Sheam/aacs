@@ -1,6 +1,5 @@
 import { Worker, Job, ConnectionOptions } from "bullmq";
 import { checkGitHubRepo } from "../checker/github/githubChecker";
-
 import { CheckJobData } from "./checkQueue";
 import { Submission } from "../modules/submission/submission.model";
 import { Assignment } from "../modules/assignment/assignment.model";
@@ -13,6 +12,8 @@ import { runTier2Checks } from "../../checker/playwright/tier2Runner";
 import { confidenceRouter } from "../../checker/router/confidenceRouter";
 import { takeResponsiveScreenshots } from "../../checker/playwright/screenshotEngine";
 
+// ── Fix 1: correct import paths ──────────────────────────────────────────────
+
 const worker = new Worker<CheckJobData>(
   "check-queue",
   async (job: Job<CheckJobData>) => {
@@ -24,9 +25,10 @@ const worker = new Worker<CheckJobData>(
 
     try {
       // ── Step 1: GitHub check ──────────────────────────────────────────
-      console.log(`[1/3] GitHub check → ${githubUrl}`);
+      console.log(`[1/4] GitHub check → ${githubUrl}`);
       const githubResult = await checkGitHubRepo(githubUrl);
 
+      // ── Fix 2: null guard ─────────────────────────────────────────────
       if (!githubResult) {
         throw new Error(`GitHub checker returned null for: ${githubUrl}`);
       }
@@ -74,30 +76,32 @@ const worker = new Worker<CheckJobData>(
       });
 
       // ── Step 2: Load enriched requirements ───────────────────────────
-      console.log(`[2/3] Loading enriched requirements…`);
+      console.log(`[2/4] Loading enriched requirements…`);
+
+      // ── Fix 3: include dbSeedConfig for Tier 2 ───────────────────────
       const assignment = await Assignment.findById(assignmentId).select(
-        "enrichedRequirements originalRequirements confidenceThreshold",
+        "enrichedRequirements originalRequirements confidenceThreshold dbSeedConfig",
       );
 
       if (!assignment) {
         throw new Error(`Assignment not found: ${assignmentId}`);
       }
 
-      // If enrichment not done yet — fallback to originalRequirements
+      // Fallback to original if enrichment not done yet
       const reqs =
         assignment.enrichedRequirements || assignment.originalRequirements;
 
-      // Count total Tier 1 and Tier 2 checks
-      let totalChecks = 1; // start with 1 for GitHub
+      const threshold = assignment.confidenceThreshold ?? 0.75;
+
+      // Count total checks for progress tracking
+      let totalChecks = 1; // GitHub = 1
       for (const section of Object.values(reqs)) {
         for (const [reqKey, req] of Object.entries(
           section as Record<string, any>,
         )) {
           if (!reqKey.startsWith("sub_req")) {
             const tier = (req as any).automationTier;
-            if (tier === 1 || tier === 2) {
-              totalChecks++;
-            }
+            if (tier === 1 || tier === 2) totalChecks++;
           }
         }
       }
@@ -107,20 +111,40 @@ const worker = new Worker<CheckJobData>(
         "progress.completedChecks": 1, // GitHub done
       });
 
-      // ── Step 3: Playwright checks (Tier 1 & Tier 2) ──────────────────
-      console.log(`[3/3] Playwright checks → ${liveUrl}`);
+      // ── Step 3: Playwright Tier 1 checks ─────────────────────────────
+      console.log(`[3/4] Playwright Tier 1 → ${liveUrl}`);
       const tier1Results = await runTier1Checks(liveUrl, reqs);
-      const tier2Results = await runTier2Checks(liveUrl, reqs);
-      const playwrightResults = [...tier1Results, ...tier2Results];
 
-      const threshold = assignment.confidenceThreshold ?? 0.75;
+      // ── Step 4: Playwright Tier 2 checks ─────────────────────────────
+      // Fix 4: only run Tier 2 if assignment has dbSeedConfig roles
+      let tier2Results: Awaited<ReturnType<typeof runTier2Checks>> = [];
+
+      const roles = assignment.dbSeedConfig?.roles;
+      if (roles && roles.length > 0) {
+        console.log(`[4/4] Playwright Tier 2 → ${liveUrl}`);
+        try {
+          tier2Results = await runTier2Checks(liveUrl, reqs, roles);
+        } catch (err: any) {
+          // Tier 2 failure is non-blocking — log and continue
+          console.warn(`Tier 2 checks failed (non-blocking): ${err.message}`);
+        }
+      } else {
+        console.log(`[4/4] Tier 2 skipped — no dbSeedConfig roles defined`);
+      }
+
+      const allPlaywrightResults = [...tier1Results, ...tier2Results];
+
+      // ── Step 5: Process all results ───────────────────────────────────
       let completedChecks = 1; // GitHub already counted
       let totalScore = 0;
       let maxScore = 0;
       let autoCommittedCount = 1; // GitHub
       let flaggedCount = 0;
 
-      for (const check of playwrightResults) {
+      // Fix 5: batch DB progress updates — only every 5 checks
+      const PROGRESS_BATCH_SIZE = 5;
+
+      for (const check of allPlaywrightResults) {
         const routed = confidenceRouter(check.confidence, threshold);
 
         const resultDoc = await Result.create({
@@ -161,7 +185,10 @@ const worker = new Worker<CheckJobData>(
             description: check.description,
             marks: check.marks,
             automatedResult: check.result.pass ? "pass" : "fail",
-            aiReasoning: `Confidence: ${check.confidence} — below threshold ${threshold}. ${check.result.error || ""}`,
+            aiReasoning:
+              `Confidence: ${check.confidence} — below threshold ${threshold}. ${
+                check.result.error || ""
+              }`.trim(),
             confidence: check.confidence,
             evidence: {
               selectorUsed: check.result.selectorUsed,
@@ -194,12 +221,17 @@ const worker = new Worker<CheckJobData>(
         }
 
         completedChecks++;
-        await Submission.findByIdAndUpdate(submissionId, {
-          "progress.completedChecks": completedChecks,
-        });
+
+        // Fix 5: batch progress update — only every N checks or on last
+        const isLast = completedChecks === totalChecks;
+        if (completedChecks % PROGRESS_BATCH_SIZE === 0 || isLast) {
+          await Submission.findByIdAndUpdate(submissionId, {
+            "progress.completedChecks": completedChecks,
+          });
+        }
       }
 
-      // ── Step 4: Take responsive screenshots ──────────────────────────
+      // ── Step 6: Take responsive screenshots (non-blocking) ───────────
       console.log(`Taking responsive screenshots…`);
       try {
         await takeResponsiveScreenshots(liveUrl, submissionId);
@@ -207,34 +239,38 @@ const worker = new Worker<CheckJobData>(
         console.warn(`Screenshots failed (non-blocking): ${err.message}`);
       }
 
-      // ── Step 5: Mark completed + write final score ────────────────────
+      // ── Step 7: Mark completed + write final score ────────────────────
       await Submission.findByIdAndUpdate(submissionId, {
         status: "completed",
         totalScore,
         maxScore,
         autoCommitted: autoCommittedCount,
         flagged: flaggedCount,
-        "progress.completedChecks": completedChecks,
+        "progress.completedChecks": totalChecks,
         "progress.totalChecks": totalChecks,
       });
 
       console.log(
-        `Job ${job.id} completed — score: ${totalScore}/${maxScore} · flagged: ${flaggedCount}`,
+        `✓ Job ${job.id} completed — score: ${totalScore}/${maxScore} · auto: ${autoCommittedCount} · flagged: ${flaggedCount}`,
       );
+
       return { success: true, submissionId, totalScore, maxScore };
     } catch (err: any) {
-      console.error(`Job ${job.id} failed: ${err.message}`);
+      console.error(`✗ Job ${job.id} failed: ${err.message}`);
+
       await Submission.findByIdAndUpdate(submissionId, {
         status: "error",
         errorMessage: err.message,
       });
+
       await AuditLog.create({
         submissionId,
         action: "error",
         reasoning: err.message,
         performedBy: "system",
       });
-      throw err;
+
+      throw err; // rethrow so BullMQ marks job as failed and retries
     }
   },
   { connection: connection as ConnectionOptions, concurrency: 5 },
