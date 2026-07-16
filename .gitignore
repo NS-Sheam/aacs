@@ -9,6 +9,7 @@
 !.gitignore
 !README.md
 !ENRICHED-JSON-SPEC.md
+!KNOWN-ISSUES.md
 
 # Personal/local AI workspace and scratch material must stay local.
 isa_personal_files/
