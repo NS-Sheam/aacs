@@ -33,3 +33,4 @@ server/outputs/
 .env.*
 !.env.example
 !.env.local.example
+scripts/doc/
