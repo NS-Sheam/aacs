@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import { submitAssignment } from "@/app/lib/api";
 
-const BASE =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function SubmissionForm({
     assignmentId,
