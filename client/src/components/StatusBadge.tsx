@@ -2,12 +2,12 @@ import { SubmissionStatus } from '@/types'
 import { CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react'
 
 interface StatusBadgeProps {
-  status: SubmissionStatus
+  status: string
   size?: 'sm' | 'md' | 'lg'
 }
 
 const statusConfigs: Record<
-  SubmissionStatus,
+  string,
   {
     label: string
     bg: string
@@ -44,6 +44,35 @@ const statusConfigs: Record<
     border: 'border-red-200',
     icon: AlertCircle,
   },
+  pending: {
+    label: 'Pending',
+    bg: 'bg-gray-50',
+    text: 'text-gray-700',
+    border: 'border-gray-200',
+    icon: Loader2,
+  },
+  resolved: {
+    label: 'Resolved',
+    bg: 'bg-green-50',
+    text: 'text-green-700',
+    border: 'border-green-200',
+    icon: CheckCircle2,
+  },
+  running: {
+    label: 'Running',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    icon: Loader2,
+  },
+  failed: {
+    label: 'Failed',
+    bg: 'bg-red-50',
+    text: 'text-red-700',
+    border: 'border-red-200',
+    icon: AlertCircle,
+  },
+  
 }
 
  const StatusBadge = ({ status, size = 'md' }: StatusBadgeProps) => {
