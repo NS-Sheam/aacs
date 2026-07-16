@@ -9,6 +9,7 @@ import { ReviewQueue } from "../modules/reviewQueue/reviewQueue.model";
 import { AuditLog } from "../modules/auditLog/auditLog.model";
 import { connection } from "../config/redis";
 import { runTier1Checks } from "../../checker/playwright/playwrightRunner";
+import { runTier2Checks } from "../../checker/playwright/tier2Runner";
 import { confidenceRouter } from "../../checker/router/confidenceRouter";
 import { takeResponsiveScreenshots } from "../../checker/playwright/screenshotEngine";
 
@@ -86,17 +87,17 @@ const worker = new Worker<CheckJobData>(
       const reqs =
         assignment.enrichedRequirements || assignment.originalRequirements;
 
-      // Count total Tier 1 checks
+      // Count total Tier 1 and Tier 2 checks
       let totalChecks = 1; // start with 1 for GitHub
       for (const section of Object.values(reqs)) {
         for (const [reqKey, req] of Object.entries(
           section as Record<string, any>,
         )) {
-          if (
-            !reqKey.startsWith("sub_req") &&
-            (req as any).automationTier === 1
-          ) {
-            totalChecks++;
+          if (!reqKey.startsWith("sub_req")) {
+            const tier = (req as any).automationTier;
+            if (tier === 1 || tier === 2) {
+              totalChecks++;
+            }
           }
         }
       }
@@ -106,9 +107,11 @@ const worker = new Worker<CheckJobData>(
         "progress.completedChecks": 1, // GitHub done
       });
 
-      // ── Step 3: Playwright Tier 1 checks ─────────────────────────────
-      console.log(`[3/3] Playwright Tier 1 → ${liveUrl}`);
+      // ── Step 3: Playwright checks (Tier 1 & Tier 2) ──────────────────
+      console.log(`[3/3] Playwright checks → ${liveUrl}`);
       const tier1Results = await runTier1Checks(liveUrl, reqs);
+      const tier2Results = await runTier2Checks(liveUrl, reqs);
+      const playwrightResults = [...tier1Results, ...tier2Results];
 
       const threshold = assignment.confidenceThreshold ?? 0.75;
       let completedChecks = 1; // GitHub already counted
@@ -117,7 +120,7 @@ const worker = new Worker<CheckJobData>(
       let autoCommittedCount = 1; // GitHub
       let flaggedCount = 0;
 
-      for (const check of tier1Results) {
+      for (const check of playwrightResults) {
         const routed = confidenceRouter(check.confidence, threshold);
 
         const resultDoc = await Result.create({
