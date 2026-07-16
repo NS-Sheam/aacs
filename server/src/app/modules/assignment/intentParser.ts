@@ -26,40 +26,32 @@ export interface ParsedRule {
   confidence: number;
   needsClarification: boolean;
 }
+const SYSTEM_PROMPT = `You are a DOM check rule generator for a web assignment checker.
 
-const SYSTEM_PROMPT = `You are a DOM check rule generator for an automated web assignment checker used by a coding bootcamp.
-  
-  Given a UI requirement description from a student assignment, generate a structured JSON rule.
-  
-  CheckType definitions:
-  - "ui-element": element must exist in DOM → tier 1
-  - "ui-count": specific number of elements required → tier 1
-  - "ui-position": element must be at left/center/right position → tier 1
-  - "functional-auth": requires a logged-in browser session to verify → tier 2
-  - "functional-crud": requires database interaction or API call → tier 2
-  - "conditional-logic": element visible only under specific application state → tier 3
-  - "visual-figma": visual comparison to Figma design required → tier 3
-  - "needsClarification": cannot determine automated rule with confidence → tier 3
-  
-  Rules for selectors array:
-  - Provide 4 to 6 CSS selectors ordered from most specific to least specific
-  - Use class names, tag names, attributes, and combinations
-  - Include both semantic and common class-based selectors
-  
-  Rules for requiredState:
-  - For ui-position: { "position": "left" | "center" | "right" }
-  - For functional-auth: { "authRole": "student" | "moderator" | "admin" }
-  - For functional-crud: { "action": "...", "expectedCount": number }
-  - For conditional-logic: full condition object like { "applicationStatus": "pending", "paymentStatus": "unpaid" }
-  - For others: null
-  
-  Rules for confidence:
-  - 0.9+ : very clear requirement, obvious selectors
-  - 0.7-0.9 : clear requirement, reasonable selectors
-  - 0.5-0.7 : some ambiguity, best-guess selectors
-  - below 0.6: set needsClarification to true
-  
-  Always return valid JSON only. No explanation. No markdown. No backticks.`;
+Given a UI requirement description, generate structured JSON rules.
+
+EXAMPLES:
+"logo/website name on the left" → { "checkType": "ui-position", "automationTier": 1, "selectors": ["nav img", "nav svg", "nav .logo", ".navbar-brand", "header img", "header .logo"], "requiredState": { "position": "left" }, "confidence": 0.92 }
+
+"Signup button on the right" → { "checkType": "ui-position", "automationTier": 1, "selectors": ["nav button", "nav a.btn", "header button", "a[href*='signup']", "a[href*='register']", "button[class*='signup']"], "requiredState": { "position": "right" }, "confidence": 0.88 }
+
+"3 data with subtitle side by side" → { "checkType": "ui-count", "automationTier": 1, "selectors": [".stats-item", ".stat-card", "[class*='stat']", ".counter-item", ".feature-item"], "requiredState": null, "confidence": 0.78 }
+
+"Background Image" → { "checkType": "ui-element", "automationTier": 1, "selectors": [".banner", ".hero", "section:first-of-type", "[class*='banner']", "[class*='hero']", "[style*='background-image']"], "requiredState": null, "confidence": 0.85 }
+
+"Navbar (Logged In): Show Logo, Home, All Scholarships, and User Profile Image with a dropdown." → { "checkType": "functional-auth", "automationTier": 2, "selectors": ["nav img.avatar", ".user-profile", ".user-menu", "nav .dropdown", ".profile-img"], "requiredState": { "authRole": "student" }, "confidence": 0.88 }
+
+"Action 'Pay': Visible only if status is 'pending' AND payment status is 'unpaid'." → { "checkType": "conditional-logic", "automationTier": 3, "selectors": ["button[data-action='pay']", ".pay-btn", "button.pay", "a.pay", "button:has-text('Pay')"], "requiredState": { "applicationStatus": "pending", "paymentStatus": "unpaid" }, "confidence": 0.61 }
+
+"JWT/Firebase Token Verification: Secure APIs with middleware." → { "checkType": "needsClarification", "automationTier": 3, "selectors": [], "requiredState": null, "confidence": 0.2 }
+
+RULES:
+- Always return 4-6 selectors from most to least specific
+- For "left/right/center" requirements always use "ui-position" checkType
+- For "number of items" requirements always use "ui-count" checkType
+- Auth requirements always use "functional-auth" with authRole in requiredState
+- Cannot be tested by DOM inspection → "needsClarification" with confidence < 0.3
+- Return ONLY valid JSON. No explanation. No markdown.`;
 
 export async function parseRequirement(
   description: string,
