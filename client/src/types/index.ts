@@ -29,3 +29,76 @@ export interface Assignment {
   submissionCount?: number
   
 }
+
+export interface GitHubCheckResult {
+  repoExists: boolean;
+  isPrivate: boolean;
+  totalCommits: number;
+  lastCommitDate: string | null;
+  lastCommitMessage: string | null;
+  hasReadme: boolean;
+  commitSpreadFlag: boolean;
+  allCommitsSameDay: boolean;
+  error?: string;
+}
+
+export interface AssignmentUpload{
+  title: string,
+  batch: number,
+  assignmentNo: number,
+  figmaUrl?: string,
+  originalRequirements: Record<string, any>
+}
+
+export interface SubmissionAssignment {
+  assignmentId: string;
+  studentName: string;
+  liveUrl: string;
+  githubUrl: string;
+        
+}
+
+export interface ReviewItem {
+  _id: string;
+  section: string;
+  reqKey: string;
+  description: string;
+  marks: number;
+  automatedResult: string;
+  aiReasoning: string;
+  confidence: number;
+  status: string;
+  decision?: string;
+}
+
+export interface Summary{
+  totalScore: number;
+  maxScore: number;
+  passed: number;
+  failed: number;
+  flagged: number;
+  autoCommitted: number;
+}
+
+
+export interface SubmissionData {
+  progress: Progress
+  _id: string
+  assignmentId: string
+  studentName: string
+  liveUrl: string
+  githubUrl: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  __v: number
+  autoCommitted: number
+  flagged: number
+  maxScore: number
+  totalScore: number
+}
+
+export interface Progress {
+  completedChecks: number
+  totalChecks: number
+}

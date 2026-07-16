@@ -43,14 +43,25 @@ const assignment1Path = path.resolve(
   "../scripts/test-data/assignment1.json",
 );
 
+const assignment11Path = path.resolve(
+  process.cwd(),
+  "../scripts/test-data/assignment11.json",
+);
+
 function loadStudents(): StudentSubmission[] {
-  return JSON.parse(readFileSync(studentsPath, "utf8"));
+  const content = readFileSync(studentsPath, "utf8");
+  return JSON.parse(content.replace(/^\uFEFF/, ""));
 }
 
 function loadAssignment1Requirements(): Record<string, any> {
-  return JSON.parse(readFileSync(assignment1Path, "utf8"));
+  const content = readFileSync(assignment1Path, "utf8");
+  return JSON.parse(content.replace(/^\uFEFF/, ""));
 }
 
+function loadAssignment11Requirements(): Record<string, any> {
+  const content = readFileSync(assignment11Path, "utf8");
+  return JSON.parse(content.replace(/^\uFEFF/, ""));
+}
 async function seed() {
   try {
     const students = loadStudents();
@@ -149,6 +160,33 @@ async function seed() {
         status: submission.status,
       })),
     );
+
+    // Seed Assignment 11
+    const assignment11Reqs = loadAssignment11Requirements();
+    const assignment11 = await Assignment.findOneAndUpdate(
+      { assignmentNo: 11, batch: 12 },
+      {
+        assignmentNo: 11,
+        batch: 12,
+        title: "Assignment 11 - Scholarship Portal",
+        figmaUrl: "https://www.figma.com/design/example-figma-a11",
+        originalRequirements: assignment11Reqs,
+        confidenceThreshold: 0.75,
+        status: "active",
+        version: 1,
+        dbSeedConfig: {
+          roles: [
+            { role: "student", email: "student@test.com", password: "Test@1234" },
+            { role: "moderator", email: "moderator@test.com", password: "Test@1234" },
+            { role: "admin", email: "admin@test.com", password: "Test@1234" }
+          ],
+          sampleData: { scholarships: 6 }
+        }
+      },
+      { returnDocument: "after", upsert: true },
+    );
+
+    console.log(`Seeded assignment: ${assignment11.title}`);
 
     await mongoose.disconnect();
     console.log("Disconnected from MongoDB");
