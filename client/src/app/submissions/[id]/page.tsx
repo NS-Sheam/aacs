@@ -41,10 +41,7 @@ const SubmissionDetails = async ({ params }: Props) => {
                 <div className="md:pt-3">
               <StatusBadge
                 status={
-                  submissionDetail?.status === "completed"
-                    ? "completed"
-                    : "active"
-                }
+                  submissionDetail?.status}
                 size="lg"
               />
             </div>

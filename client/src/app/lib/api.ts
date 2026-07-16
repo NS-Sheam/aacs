@@ -108,3 +108,7 @@ export const summaryResults=async (submissionId: string): Promise<any> => {
 export const getResultBySubmissionId=async (submissionId: string): Promise<any> => {
   return apiFetch(`/api/v1/results/${submissionId}`);
 }
+
+export const getSubmissionsByAssignmentId=async (assignmentId: string,page: number,limit: number): Promise<any> => {
+  return apiFetch(`/api/v1/submissions/assignment/${assignmentId}/paginated?page=${page}&limit=${limit}`);
+}
