@@ -1,17 +1,23 @@
 [
   {
     "studentName": "Nobonita Saha Niha",
+    "studentId": "L2B7-0386",
+    "email": "nobonitaniha3@gmail.com",
     "liveUrl": "https://nsniha.github.io/Assignment-01/",
     "githubUrl": "https://github.com/NSniha/Assignment-01"
   },
   {
-    "studentName": "Nuhath khan lahif",
+    "studentName": "Nuhath Khan Lahif",
+    "studentId": "WEB7-0519",
+    "email": "lahifkhan52@gmail.com",
     "liveUrl": "https://lahifkhan.github.io/landing-launchpad/",
     "githubUrl": "https://github.com/lahifkhan/landing-launchpad"
   },
   {
-    "studentName": "Emon",
-    "liveUrl": "https://emon0426.github.io/ASSIGNMENT-001/",
-    "githubUrl": "https://github.com/Emon0426/ASSIGNMENT-001"
+    "studentName": "Goutam Mondal",
+    "studentId": "WEB12-0075",
+    "email": "shuvromondal47@gmail.com",
+    "liveUrl": "https://shuvromandal.github.io/first-assignment/",
+    "githubUrl": "https://github.com/ShuvroMandal/first-assignment.git"
   }
 ]

@@ -237,10 +237,16 @@ const worker = new Worker<CheckJobData>(
   { connection: connection as ConnectionOptions, concurrency: 5 },
 );
 
-worker.on("completed", (job) => console.log(`✓ Job ${job.id} done`));
-worker.on("failed", (job, err) =>
-  console.error(`✗ Job ${job?.id} failed: ${err.message}`),
-);
-worker.on("error", (err) => console.error("Worker error:", err));
+worker.on("completed", (job: Job) => {
+  console.log(`Job ${job.id} completed successfully`);
+});
+
+worker.on("failed", (job: Job | undefined, err: Error) => {
+  console.error(`Job ${job?.id} failed: ${err.message}`);
+});
+
+worker.on("error", (err: Error) => {
+  console.error("Worker error:", err);
+});
 
 export default worker;
