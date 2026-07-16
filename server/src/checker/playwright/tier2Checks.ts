@@ -1,63 +1,65 @@
-// Playwright is installed by the automation owner later. Until then, this keeps
-// the scaffold type-safe without requiring the `playwright` package today.
-type Page = {
-  $$(selector: string): Promise<unknown[]>;
-  $(selector: string): Promise<{ isVisible?: () => Promise<boolean> } | null>;
-};
+import { Page } from "playwright";
+import { CheckResult } from "./ruleEvaluator";
 
-type DynamicCountResult = {
-  pass: boolean;
-  actual: number;
-  expected: number;
-};
-
-type ConditionalVisibilityResult = {
-  pass: boolean;
-  visible: boolean;
-  state: Record<string, any>;
-};
-
-// Day 4 will use this helper after the database seeder creates app data.
-// Example requirement: "6 scholarships loading dynamically from database".
+// Check dynamically loaded count — e.g. "6 scholarships from DB"
 export async function checkDynamicCount(
   page: Page,
-  selector: string,
+  selectors: string[],
   expected: number,
-): Promise<DynamicCountResult> {
-  console.log(
-    `[tier2Checks] checkDynamicCount scaffold - selector: ${selector}, expected: ${expected}`,
-  );
+): Promise<CheckResult> {
+  // Wait for dynamic content to load
+  await page.waitForTimeout(2000);
 
-  // Full Day 4 implementation should wait for dynamic content, count matches,
-  // and return whether the seeded UI rendered the expected number of items.
-  const actual = 0;
+  for (const selector of selectors) {
+    try {
+      const els = await page.$$(selector);
+      if (els.length > 0) {
+        return {
+          pass: els.length === expected,
+          selectorUsed: selector,
+          actualValue: els.length,
+          expectedValue: expected,
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
 
-  console.log(
-    `[tier2Checks] checkDynamicCount pending Day 4 logic - actual placeholder: ${actual}`,
-  );
-
-  return { pass: false, actual, expected };
+  return {
+    pass: false,
+    error: `Dynamic elements not found. Expected ${expected}. Tried: ${selectors.join(", ")}`,
+  };
 }
 
-// Day 4 will verify UI visibility after setting or reading application state.
-// Example requirement: "Pay button visible only if pending + unpaid".
+// Check conditional visibility — e.g. "Pay button only if pending + unpaid"
 export async function checkConditionalVisibility(
   page: Page,
-  selector: string,
-  requiredState: Record<string, any>,
-): Promise<ConditionalVisibilityResult> {
-  console.log(
-    `[tier2Checks] checkConditionalVisibility scaffold - selector: ${selector}`,
-    requiredState,
-  );
+  selectors: string[],
+  shouldBeVisible: boolean,
+): Promise<CheckResult> {
+  for (const selector of selectors) {
+    try {
+      const el = await page.$(selector);
+      if (el) {
+        const visible = await el.isVisible();
+        return {
+          pass: visible === shouldBeVisible,
+          selectorUsed: selector,
+          actualValue: visible ? "visible" : "hidden",
+          expectedValue: shouldBeVisible ? "visible" : "hidden",
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
 
-  // Full Day 4 implementation should apply/inspect requiredState, locate the
-  // selector, and compare actual visibility with the expected condition.
-  const visible = false;
-
-  console.log(
-    `[tier2Checks] checkConditionalVisibility pending Day 4 logic - visible placeholder: ${visible}`,
-  );
-
-  return { pass: false, visible, state: requiredState };
+  // Element not found — if shouldBeVisible is false, that is a pass
+  return {
+    pass: !shouldBeVisible,
+    error: shouldBeVisible
+      ? `Element not found. Tried: ${selectors.join(", ")}`
+      : undefined,
+  };
 }
