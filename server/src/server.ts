@@ -3,10 +3,8 @@ import app from "./app";
 import { errorlogger, logger } from "./app/config/logger";
 import { connectDB } from "./app/config/db";
 import "./app/worker/checkWorker";
-const config = {
-  port: process.env.PORT || 7777,
-  node_env: process.env.NODE_ENV || "development",
-};
+import config from "./app/config";
+
 let server: Server | null = null;
 
 async function main() {
@@ -14,10 +12,10 @@ async function main() {
     await connectDB();
     server = app.listen(config.port, () => {
       console.log(
-        `🚀 Server is running on ${config.node_env} mode at http://localhost:${config.port}`,
+        `🚀 Server is running on ${config.nodeEnv} mode at http://localhost:${config.port}`,
       );
       logger.info(
-        `🚀 Server is running on ${config.node_env} mode at http://localhost:${config.port}`,
+        `🚀 Server is running on ${config.nodeEnv} mode at http://localhost:${config.port}`,
       );
     });
   } catch (error) {
