@@ -73,7 +73,7 @@ export default function AssignmentCard({
     </div>
 
     <StatusBadge
-      status={status === "active" ? "active" : "queued"}
+      status={status}
       size="sm"
     />
 
