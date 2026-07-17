@@ -11,7 +11,7 @@ import { Submission } from "../modules/submission/submission.model";
 import { checkGitHubRepo } from "../checker/github/githubChecker";
 import { enrichAssignmentRequirements } from "../checker/ai/intentParser";
 import { runTier1Check } from "../checker/playwright/tier1Checks";
-import { createAuthContext } from "../../checker/sessions/sessionManager";
+import { createAuthContext, createGuestContext } from "../../checker/sessions/sessionManager";
 import { CheckJobData } from "./checkQueue";
 import { generateJSONContentWithImage, generateJSONContent } from "../helpers/gemini";
 import { broadcastSseEvent } from "../helpers/sse";
@@ -218,25 +218,17 @@ const worker = new Worker<CheckJobData>(
               }
             } else if (req.automationTier === 2 && req.checkType !== "needsClarification") {
               const requiredRole = req.requiredState?.authRole || "student";
-              const roles = assignment.dbSeedConfig?.roles || [];
-              const roleConfig = roles.find((ro: any) => ro.role === requiredRole);
-
-              if (!roleConfig) {
-                checkResult = {
-                  correct: false,
-                  message: `No seed config found for role: ${requiredRole}`,
-                  evidence: {}
-                };
-              } else {
+              
+              if (requiredRole === "guest") {
                 try {
-                  const authContext = await createAuthContext(browser, liveUrl, roleConfig as any);
+                  const authContext = await createGuestContext(browser);
                   const authPage = await authContext.newPage();
                   try {
                     await authPage.goto(liveUrl, { waitUntil: "load", timeout: 12000 }).catch(() => {});
                     const t1Result = await runTier1Check(authPage, req);
                     checkResult = {
                       correct: t1Result.correct,
-                      message: `[Tier 2 Auth Check (${requiredRole})] ${t1Result.message}`,
+                      message: `[Tier 2 Guest Check] ${t1Result.message}`,
                       evidence: t1Result.evidence
                     };
                   } finally {
@@ -245,9 +237,42 @@ const worker = new Worker<CheckJobData>(
                 } catch (err: any) {
                   checkResult = {
                     correct: false,
-                    message: `Tier 2 Auth check failed: ${err.message}`,
+                    message: `Tier 2 Guest check failed: ${err.message}`,
                     evidence: {}
                   };
+                }
+              } else {
+                const roles = assignment.dbSeedConfig?.roles || [];
+                const roleConfig = roles.find((ro: any) => ro.role === requiredRole);
+
+                if (!roleConfig) {
+                  checkResult = {
+                    correct: false,
+                    message: `No seed config found for role: ${requiredRole}`,
+                    evidence: {}
+                  };
+                } else {
+                  try {
+                    const authContext = await createAuthContext(browser, liveUrl, roleConfig as any);
+                    const authPage = await authContext.newPage();
+                    try {
+                      await authPage.goto(liveUrl, { waitUntil: "load", timeout: 12000 }).catch(() => {});
+                      const t1Result = await runTier1Check(authPage, req);
+                      checkResult = {
+                        correct: t1Result.correct,
+                        message: `[Tier 2 Auth Check (${requiredRole})] ${t1Result.message}`,
+                        evidence: t1Result.evidence
+                      };
+                    } finally {
+                      await authContext.close();
+                    }
+                  } catch (err: any) {
+                    checkResult = {
+                      correct: false,
+                      message: `Tier 2 Auth check failed: ${err.message}`,
+                      evidence: {}
+                    };
+                  }
                 }
               }
             }

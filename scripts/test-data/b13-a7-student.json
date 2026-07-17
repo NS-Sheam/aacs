@@ -1,0 +1,42 @@
+[
+  {
+    "studentName": "Ariful Islam",
+    "studentId": "WEB12-0778",
+    "email": "518arifulislam518@gmail.com",
+    "liveUrl": "https://keen-keeper-203.netlify.app/status",
+    "githubUrl": "https://github.com/arifu-lislam/Assignment-7-keep",
+    "assignmentNo": 7
+  },
+  {
+    "studentName": "Md Rakibul Hasan Reday",
+    "studentId": "WEB11-0775",
+    "email": "rakibulhasanreday.uk@gmail.com",
+    "liveUrl": "https://keen-keeper-netlify.netlify.app/",
+    "githubUrl": "https://github.com/R2k4b8l/Keen-Keeper",
+    "assignmentNo": 7
+  },
+  {
+    "studentName": "Abida Jannat Chowdhury",
+    "studentId": "WEB13-1949",
+    "email": "abidajannatchy03@gmail.com",
+    "liveUrl": "https://keeenkeeper.netlify.app/",
+    "githubUrl": "https://github.com/Abida-jannat/Keen-keeper",
+    "assignmentNo": 7
+  },
+  {
+    "studentName": "Sanjida Jahan",
+    "studentId": "WEB13-3169",
+    "email": "sanjidajahan341@gmail.com",
+    "liveUrl": "https://keen-keeper-omega-seven.vercel.app/",
+    "githubUrl": "https://github.com/sanjidaj/KeenKeeper",
+    "assignmentNo": 7
+  },
+  {
+    "studentName": "Hafiz Al Asad",
+    "studentId": "WEB13-4768",
+    "email": "itsridoy99@gmail.com",
+    "liveUrl": "https://keen-keeperr.netlify.app/",
+    "githubUrl": "https://github.com/hafizalasad999/Keen-Keeper",
+    "assignmentNo": 7
+  }
+]
