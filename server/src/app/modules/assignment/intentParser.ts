@@ -13,7 +13,7 @@ try {
 
 const generationConfig: GenerationConfig = {
   temperature: 0.1, // low temperature = deterministic output
-  maxOutputTokens: 400,
+  maxOutputTokens: 1024,
   responseMimeType: "application/json", // force JSON output
 };
 
@@ -36,29 +36,86 @@ export interface ParsedRule {
 
 const SYSTEM_PROMPT = `You are a DOM check rule generator for a web assignment checker.
 
-Given a UI requirement description, generate structured JSON rules.
+Given a UI requirement description, generate structured JSON with BOTH selectors AND a rules[] array.
+The rules[] array drives the Playwright checker deterministically — always include it.
 
 EXAMPLES:
-"logo/website name on the left" → { "checkType": "ui-position", "automationTier": 1, "selectors": ["nav img", "nav svg", "nav .logo", ".navbar-brand", "header img", "header .logo"], "requiredState": { "position": "left" }, "confidence": 0.92 }
+"logo/website name on the left" →
+{
+  "checkType": "ui-position", "automationTier": 1,
+  "selectors": ["nav img", "nav svg", "nav .logo", ".navbar-brand", "header img", "header .logo"],
+  "requiredState": null, "confidence": 0.92,
+  "rules": [{ "kind": "position", "target": "logo", "selectorHint": "nav img, nav svg, nav .logo", "position": "left" }]
+}
 
-"Signup button on the right" → { "checkType": "ui-position", "automationTier": 1, "selectors": ["nav button", "nav a.btn", "header button", "a[href*='signup']", "a[href*='register']", "button[class*='signup']"], "requiredState": { "position": "right" }, "confidence": 0.88 }
+"Signup button on the right" →
+{
+  "checkType": "ui-position", "automationTier": 1,
+  "selectors": ["nav button", "nav a.btn", "header button", "a[href*='signup']", "a[href*='register']"],
+  "requiredState": null, "confidence": 0.88,
+  "rules": [{ "kind": "position", "target": "signup button", "selectorHint": "nav button, nav a.btn, a[href*='signup']", "position": "right" }]
+}
 
-"3 data with subtitle side by side" → { "checkType": "ui-count", "automationTier": 1, "selectors": [".stats-item", ".stat-card", "[class*='stat']", ".counter-item", ".feature-item"], "requiredState": null, "confidence": 0.78 }
+"3 data with subtitle side by side" →
+{
+  "checkType": "ui-count", "automationTier": 1,
+  "selectors": [".stats-item", ".stat-card", "[class*='stat']", ".counter-item"],
+  "requiredState": null, "confidence": 0.78,
+  "rules": [{ "kind": "count", "target": "stat cards", "selectorHint": ".stat-card, .stats-item", "expected": 3 }]
+}
 
-"Background Image" → { "checkType": "ui-element", "automationTier": 1, "selectors": [".banner", ".hero", "section:first-of-type", "[class*='banner']", "[class*='hero']", "[style*='background-image']"], "requiredState": null, "confidence": 0.85 }
+"Heading in the center" →
+{
+  "checkType": "ui-position", "automationTier": 1,
+  "selectors": [".banner h1", ".hero h1", "section h1", "h1", "h2"],
+  "requiredState": null, "confidence": 0.87,
+  "rules": [{ "kind": "position", "target": "heading", "selectorHint": ".banner h1, .hero h1, h1, h2", "position": "center" }]
+}
 
-"Navbar (Logged In): Show Logo, Home, All Scholarships, and User Profile Image with a dropdown." → { "checkType": "functional-auth", "automationTier": 2, "selectors": ["nav img.avatar", ".user-profile", ".user-menu", "nav .dropdown", ".profile-img"], "requiredState": { "authRole": "student" }, "confidence": 0.88 }
+"Stay Focused button in the center" →
+{
+  "checkType": "ui-position", "automationTier": 1,
+  "selectors": [".banner button", ".hero button", ".banner a.btn", "button:has-text('Stay Focused')", "a:has-text('Stay Focused')"],
+  "requiredState": null, "confidence": 0.83,
+  "rules": [
+    { "kind": "text", "target": "CTA button", "selectorHint": ".banner button, .hero button, button", "expected": "Stay Focused" },
+    { "kind": "position", "target": "CTA button", "selectorHint": ".banner button, .hero button", "position": "center" }
+  ]
+}
 
-"Action 'Pay': Visible only if status is 'pending' AND payment status is 'unpaid'." → { "checkType": "conditional-logic", "automationTier": 3, "selectors": ["button[data-action='pay']", ".pay-btn", "button.pay", "a.pay", "button:has-text('Pay')"], "requiredState": { "applicationStatus": "pending", "paymentStatus": "unpaid" }, "confidence": 0.61 }
+"Background Image" →
+{
+  "checkType": "ui-element", "automationTier": 1,
+  "selectors": [".banner", ".hero", "section:first-of-type", "[class*='banner']", "[style*='background-image']"],
+  "requiredState": null, "confidence": 0.85,
+  "rules": [{ "kind": "exists", "target": "background image section", "selectorHint": ".banner, .hero, section:first-of-type", "expected": true }]
+}
 
-"JWT/Firebase Token Verification: Secure APIs with middleware." → { "checkType": "needsClarification", "automationTier": 3, "selectors": [], "requiredState": null, "confidence": 0.2 }
+"Navbar (Logged In): Show Logo, Home, All Scholarships, and User Profile Image with a dropdown." →
+{
+  "checkType": "functional-auth", "automationTier": 2,
+  "selectors": ["nav img.avatar", ".user-profile", ".user-menu", "nav .dropdown", ".profile-img"],
+  "requiredState": { "authRole": "student" }, "confidence": 0.88,
+  "rules": [{ "kind": "exists", "target": "user dropdown", "selectorHint": ".user-profile, nav .dropdown, .profile-img", "expected": true }]
+}
 
-RULES:
-- Always return 4-6 selectors from most to least specific
-- For "left/right/center" requirements always use "ui-position" checkType
-- For "number of items" requirements always use "ui-count" checkType
-- Auth requirements always use "functional-auth" with authRole in requiredState
-- Cannot be tested by DOM inspection → "needsClarification" with confidence < 0.3
+"Action 'Pay': Visible only if status is 'pending' AND payment status is 'unpaid'." →
+{
+  "checkType": "conditional-logic", "automationTier": 3,
+  "selectors": ["button[data-action='pay']", ".pay-btn", "button:has-text('Pay')"],
+  "requiredState": { "applicationStatus": "pending", "paymentStatus": "unpaid" }, "confidence": 0.61,
+  "rules": [{ "kind": "exists", "target": "pay button", "selectorHint": ".pay-btn, button", "expected": true }]
+}
+
+STRICT RULES:
+- ALWAYS include a rules[] array — never omit it
+- For position requirements (left/right/center): use checkType "ui-position" and add a { "kind": "position", "position": "left"|"right"|"center" } rule
+- For count requirements (N items/cards/columns): use checkType "ui-count" and add a { "kind": "count", "expected": N } rule with the exact number extracted from description
+- For text content requirements: add a { "kind": "text", "expected": "exact text to match" } rule
+- For simple existence: add { "kind": "exists", "expected": true } rule
+- Auth requirements: checkType "functional-auth", automationTier 2
+- Cannot be DOM-tested: checkType "needsClarification", confidence < 0.3
+- Always return 4-6 selectors ordered most-to-least specific
 - Return ONLY valid JSON. No explanation. No markdown.`;
 
 let discoveredDeepSeekModel: string | null = null;
@@ -74,7 +131,7 @@ async function getDeepSeekModelName(): Promise<string> {
       if (found) {
         discoveredDeepSeekModel = found.name;
         console.log(`[IntentParser] Detected Ollama DeepSeek model: ${discoveredDeepSeekModel}`);
-        return discoveredDeepSeekModel;
+        return discoveredDeepSeekModel as string;
       }
     }
   } catch (e) {

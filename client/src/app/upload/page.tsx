@@ -2,18 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Upload, ArrowRight, Loader2, AlertCircle, CheckCircle, FilePlus, ChevronRight, Layers, Trash2, Plus, Info, Globe, GitFork, User, PlayCircle } from 'lucide-react'
+import { Upload, ArrowRight, Loader2, AlertCircle, CheckCircle, FilePlus, ChevronRight, Layers, Trash2, Plus, Info, Globe, GitFork, User, PlayCircle, Sparkles } from 'lucide-react'
 import { AssignmentJSON, Assignment } from '@/types'
 import AssignmentPreview from '@/components/upload/preview'
-import { createAssignment, fetchAssignmentsList, updateAssignment, deleteAssignment } from '../lib/api'
+import { createAssignment, fetchAssignmentsList, updateAssignment, deleteAssignment, reEnrichAssignment } from '../lib/api'
 import Editor from "@monaco-editor/react"
 import Link from 'next/link'
+import { useToast } from '@/components/Toast'
 
 interface UploadFormInputs {
   assignmentJSON: string
 }
 
 export default function UploadPage() {
+  const { toast } = useToast()
   const {
     setValue,
     handleSubmit,
@@ -41,6 +43,7 @@ export default function UploadPage() {
 
   // Edit action state: if editing an existing assignment
   const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null)
+  const [reEnrichLoading, setReEnrichLoading] = useState(false)
 
   // Direct Input Form State
   const [formBatch, setFormBatch] = useState('14')
@@ -209,10 +212,10 @@ export default function UploadPage() {
 
   // Delete Assignment action
   const handleDeleteAssignment = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this assignment specifications? This cannot be undone.")) return
+    // Proceed directly - toast feedback after
     try {
       await deleteAssignment(id)
-      alert("Assignment successfully deleted")
+      toast('Assignment successfully deleted', 'success')
       
       // Clear fields if we deleted the current active one
       if (editingAssignmentId === id) {
@@ -228,7 +231,21 @@ export default function UploadPage() {
       
       refreshAssignments()
     } catch (err: any) {
-      alert("Delete failed: " + err.message)
+      toast('Delete failed: ' + err.message, 'error')
+    }
+  }
+
+  const handleReEnrich = async (id: string) => {
+    // Proceed directly - re-enrichment is non-destructive (can be re-run)
+    setReEnrichLoading(true)
+    try {
+      await reEnrichAssignment(id)
+      toast('Re-enrichment complete! AI rules have been regenerated.', 'success')
+      refreshAssignments()
+    } catch (err: any) {
+      toast('Re-enrich failed: ' + err.message, 'error')
+    } finally {
+      setReEnrichLoading(false)
     }
   }
 
@@ -284,15 +301,18 @@ export default function UploadPage() {
       }
     })
 
+    // ─── Mark total validation ─────────────────────────────────────────────────
     if (mainTotal !== 50) {
-      errs.push(`Main Requirements total marks must be exactly 50 (Current total: ${mainTotal}).`)
+      errs.push(`Main requirements total must be exactly 50 marks (current: ${mainTotal}). Adjust the "number" fields in non-challenge rows.`)
     }
     if (challengeTotal !== 10) {
-      errs.push(`Challenge Requirements total marks must be exactly 10 (Current total: ${challengeTotal}). Section or key name should include 'challenge'.`)
+      errs.push(`Challenge requirements total must be exactly 10 marks (current: ${challengeTotal}). Section or key name must contain "challenge".`)
     }
     if (mainTotal + challengeTotal !== 60) {
-      errs.push(`Total Assignment marks must equal exactly 60 (Current total: ${mainTotal + challengeTotal}).`)
+      errs.push(`Grand total must be 60 (main 50 + challenge 10). Current total: ${mainTotal + challengeTotal}.`)
     }
+    // ───────────────────────────────────────────────────────────────────────────
+
 
     if (errs.length > 0) {
       setParseErrors(errs)
@@ -387,15 +407,17 @@ export default function UploadPage() {
         }
       }
 
+      // ─── Mark total validation ─────────────────────────────────────────────
       if (mainTotal !== 50) {
-        errs.push(`Main Requirements total marks must be exactly 50 (Current total: ${mainTotal}).`)
+        errs.push(`Main requirements total must be exactly 50 marks (current: ${mainTotal}). Adjust the "number" fields in non-challenge sections.`)
       }
       if (challengeTotal !== 10) {
-        errs.push(`Challenge Requirements total marks must be exactly 10 (Current total: ${challengeTotal}). Section or key name should include 'challenge'.`)
+        errs.push(`Challenge requirements total must be exactly 10 marks (current: ${challengeTotal}). Section or key name must contain "challenge".`)
       }
       if (mainTotal + challengeTotal !== 60) {
-        errs.push(`Total Assignment marks must equal exactly 60 (Current total: ${mainTotal + challengeTotal}).`)
+        errs.push(`Grand total must be 60 (main 50 + challenge 10). Current total: ${mainTotal + challengeTotal}.`)
       }
+      // ──────────────────────────────────────────────────────────────────────
 
       if (errs.length > 0) {
         setParseErrors(errs)
@@ -642,13 +664,24 @@ export default function UploadPage() {
                   </select>
                 </div>
                 {editingAssignmentId && (
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteAssignment(editingAssignmentId)}
-                    className="h-11 px-5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-semibold text-sm transition flex items-center justify-center gap-1.5"
-                  >
-                    <Trash2 className="h-4 w-4" /> Delete Assignment Spec
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleReEnrich(editingAssignmentId)}
+                      disabled={reEnrichLoading}
+                      className="h-11 px-5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 font-semibold text-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      {reEnrichLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      Re-enrich AI Rules
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAssignment(editingAssignmentId)}
+                      className="h-11 px-5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-semibold text-sm transition flex items-center justify-center gap-1.5"
+                    >
+                      <Trash2 className="h-4 w-4" /> Delete Assignment Spec
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

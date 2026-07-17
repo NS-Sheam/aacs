@@ -6,14 +6,9 @@ import { Result } from "../result/result.model";
 
 export interface CreateSubmissionDTO {
   assignmentId: string;
-  studentName?: string;
-  liveUrl: string;
-  githubUrl: string;
-}
-
-export interface CreateSubmissionDTO {
-  assignmentId: string;
-  studentName?: string;
+  studentName: string;
+  studentId: string;
+  email: string;
   liveUrl: string;
   githubUrl: string;
   duplicateResolution?: 'overwrite' | 'keep_previous' | 'keep_both';
@@ -23,6 +18,17 @@ export interface CreateSubmissionDTO {
 const createSubmission = async (
   data: CreateSubmissionDTO,
 ): Promise<ISubmission & { isDuplicate?: boolean; existingSubmissionId?: string }> => {
+  // Validate required student fields
+  if (!data.studentName || !data.studentName.trim()) {
+    throw new Error('studentName is required');
+  }
+  if (!data.studentId || !data.studentId.trim()) {
+    throw new Error('studentId is required (e.g. WEB13-0001)');
+  }
+  if (!data.email || !data.email.trim()) {
+    throw new Error('email is required');
+  }
+
   // Validate URLs
   if (!data.liveUrl.startsWith("http")) {
     throw new Error("liveUrl must be a valid URL starting with http");
@@ -61,15 +67,15 @@ const createSubmission = async (
     }
   }
 
-  const nameStr = data.studentName || "";
-  const emailMatch = nameStr.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-  const studentEmail = emailMatch ? emailMatch[1] : "";
-  const studentNameClean = emailMatch ? nameStr.replace(emailMatch[0], "").replace(/[()]/g, "").trim() : nameStr;
+  const nameStr = data.studentName.trim();
+  const studentEmail = data.email.trim();
+  const studentNameClean = nameStr;
 
   const submission = await Submission.create({
     assignmentId: data.assignmentId,
-    studentName: studentNameClean || nameStr,
-    studentEmail: studentEmail || undefined,
+    studentName: studentNameClean,
+    studentEmail: studentEmail,
+    studentId: data.studentId.trim(),
     liveUrl: data.liveUrl,
     githubUrl: data.githubUrl,
     status: "queued",

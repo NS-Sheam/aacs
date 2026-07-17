@@ -99,6 +99,7 @@ const worker = new Worker<CheckJobData>(
         reqKey: "github-activity",
         description: "GitHub repository activity check",
         marks: 0,
+        obtainedMarks: 0,
         status: isGithubPassed ? "pass" : "fail",
         correct: isGithubPassed,
         message: githubResult.error
@@ -460,6 +461,7 @@ Respond strictly in the following JSON format:
             reqKey,
             description: req.description,
             marks: reqMarks,
+            obtainedMarks: checkResult.correct ? reqMarks : 0,
             status: finalStatus,
             correct: checkResult.correct,
             message: checkResult.message,

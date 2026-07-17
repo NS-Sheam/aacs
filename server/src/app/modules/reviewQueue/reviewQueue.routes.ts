@@ -39,7 +39,7 @@ router.get("/", async (req: Request, res: Response) => {
 
 router.patch("/:itemId", async (req: Request, res: Response) => {
   try {
-    const { status, notes } = req.body; // 'approved' or 'rejected'
+    const { status, notes, obtainedMarks } = req.body; // 'approved' or 'rejected', and optional obtainedMarks
 
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({
@@ -56,6 +56,35 @@ router.patch("/:itemId", async (req: Request, res: Response) => {
       });
     }
 
+    // Find the corresponding Result record to check max marks limit
+    const resultDoc = await Result.findById(reviewItem.resultId);
+    if (!resultDoc) {
+      return res.status(404).json({
+        success: false,
+        message: "Associated result not found",
+      });
+    }
+
+    let finalObtainedMarks = 0;
+    if (obtainedMarks !== undefined && obtainedMarks !== null) {
+      finalObtainedMarks = Number(obtainedMarks);
+      if (isNaN(finalObtainedMarks) || finalObtainedMarks < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Obtained marks must be a non-negative number",
+        });
+      }
+      if (finalObtainedMarks > (resultDoc.marks || 0)) {
+        return res.status(400).json({
+          success: false,
+          message: `Obtained marks cannot exceed the maximum mark of ${resultDoc.marks || 0}`,
+        });
+      }
+    } else {
+      // Fallback based on approved/rejected status
+      finalObtainedMarks = status === "approved" ? (resultDoc.marks || 0) : 0;
+    }
+
     // 1. Update review item status
     reviewItem.status = "resolved";
     reviewItem.decision = status === "approved" ? "pass" : "fail";
@@ -63,23 +92,28 @@ router.patch("/:itemId", async (req: Request, res: Response) => {
     await reviewItem.save();
 
     // 2. Update the corresponding Result record
-    const resultDoc = await Result.findById(reviewItem.resultId);
-    if (resultDoc) {
-      resultDoc.correct = status === "approved";
-      resultDoc.status = status === "approved" ? "pass" : "fail";
-      resultDoc.message = `Instructor review: Manual override to ${status.toUpperCase()}. Notes: ${notes || "None"}`;
-      await resultDoc.save();
+    resultDoc.correct = finalObtainedMarks > 0;
+    resultDoc.status = finalObtainedMarks > 0 ? "pass" : "fail";
+    resultDoc.obtainedMarks = finalObtainedMarks;
+    resultDoc.instructorFeedback = notes || "";
+    resultDoc.message = `Instructor review: Manual override to ${status.toUpperCase()} (${finalObtainedMarks} pts). Notes: ${notes || "None"}`;
+    await resultDoc.save();
 
-      // 3. Recalculate submission score
-      const allResults = await Result.find({ submissionId: reviewItem.submissionId });
-      const totalScore = allResults.reduce((acc, curr) => {
-        return curr.correct ? acc + (curr.marks || 0) : acc;
-      }, 0);
+    // 3. Recalculate submission score
+    const allResults = await Result.find({ submissionId: reviewItem.submissionId });
+    const totalScore = allResults.reduce((acc, curr) => {
+      const obtained = curr.obtainedMarks !== undefined ? curr.obtainedMarks : (curr.correct ? (curr.marks || 0) : 0);
+      return acc + obtained;
+    }, 0);
 
-      await Submission.findByIdAndUpdate(reviewItem.submissionId, {
-        totalScore,
-      });
-    }
+    const maxScore = allResults.reduce((acc, curr) => {
+      return acc + (curr.marks || 0);
+    }, 0);
+
+    await Submission.findByIdAndUpdate(reviewItem.submissionId, {
+      totalScore,
+      maxScore,
+    });
 
     res.json({
       success: true,

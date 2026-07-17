@@ -143,6 +143,12 @@ export const updateAssignment = async (
   });
 };
 
+export const reEnrichAssignment = async (id: string): Promise<any> => {
+  return apiFetch<any>(`/api/v1/assignments/${id}/re-enrich`, {
+    method: "POST",
+  });
+};
+
 export const deleteAssignment = async (id: string): Promise<any> => {
   return apiFetch<any>(`/api/v1/assignments/${id}`, {
     method: "DELETE",
@@ -150,7 +156,9 @@ export const deleteAssignment = async (id: string): Promise<any> => {
 };
 export interface CreateSubmissionDTO {
   assignmentId: string;
-  studentName?: string;
+  studentName: string;
+  studentId: string;
+  email: string;
   liveUrl: string;
   githubUrl: string;
   duplicateResolution?: 'overwrite' | 'keep_previous' | 'keep_both';
@@ -222,12 +230,28 @@ export const fetchReviewQueue = async (): Promise<any[]> => {
 export const resolveReviewItem = async (
   itemId: string,
   status: "approved" | "rejected",
-  notes?: string
+  notes?: string,
+  obtainedMarks?: number
 ): Promise<void> => {
   await apiFetch(`/api/v1/review-queue/${itemId}`, {
     method: "PATCH",
-    body: JSON.stringify({ status, notes }),
+    body: JSON.stringify({ status, notes, obtainedMarks }),
   });
+};
+
+export const updateResultMarks = async (
+  resultId: string,
+  obtainedMarks: number,
+  instructorFeedback?: string
+): Promise<any> => {
+  const response = await apiFetch<{ success: boolean; data: any }>(
+    `/api/v1/results/${resultId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ obtainedMarks, instructorFeedback }),
+    }
+  );
+  return response.data;
 };
 
 export const recheckSubmission = async (

@@ -18,6 +18,8 @@ export interface IResult extends Document {
     domSnapshot?: string;
     selectorUsed?: string;
   };
+  obtainedMarks?: number;
+  instructorFeedback?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +55,8 @@ const ResultSchema = new Schema<IResult>(
       domSnapshot: { type: String },
       selectorUsed: { type: String },
     },
+    obtainedMarks: { type: Number },
+    instructorFeedback: { type: String },
   },
   { timestamps: true },
 );

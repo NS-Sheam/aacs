@@ -43,8 +43,9 @@ const getSummary = async (submissionId: string): Promise<ResultSummary> => {
   for (const r of results) {
     const marks = r.marks || 0;
     maxScore += marks;
+    const obtained = r.obtainedMarks !== undefined ? r.obtainedMarks : (r.correct ? marks : 0);
+    totalScore += obtained;
     if (r.correct) {
-      totalScore += marks;
       passed++;
     } else {
       failed++;
