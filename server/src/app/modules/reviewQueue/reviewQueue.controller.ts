@@ -26,13 +26,13 @@ const resolve = catchAsync(async (req: Request, res: Response) => {
     throw new Error("decision must be pass or fail");
   }
 
-  const item = await ReviewQueueServices.resolve(
+  const result = await ReviewQueueServices.resolve(
     req.params.itemId as string,
     decision,
     resolvedBy || "instructor",
   );
 
-  if (!item) {
+  if (!result) {
     sendResponse(res, {
       status: StatusCodes.NOT_FOUND,
       success: false,
@@ -46,7 +46,7 @@ const resolve = catchAsync(async (req: Request, res: Response) => {
     status: StatusCodes.OK,
     success: true,
     message: "Decision recorded",
-    data: item,
+    data: result,
   });
 });
 
