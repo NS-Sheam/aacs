@@ -59,6 +59,33 @@ const getSubmissionByAssignment = catchAsync(
   },
 );
 
+// GET /api/submissions/assignment/:assignmentId/paginated
+const getSubmissionByAssignmentPaginated = catchAsync(
+  async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+
+    const result = await SubmissionServices.getByAssignmentPaginated(
+      req.params.assignmentId as string,
+      page,
+      limit,
+    );
+
+    sendResponse(res, {
+      status: StatusCodes.OK,
+      success: true,
+      message: "Assignment submissions retrieved successfully",
+      meta: {
+        page: result.page,
+        limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+      data: result.submissions,
+    });
+  },
+);
+
 // GET /api/submissions/:id
 const getSubmissionById = catchAsync(async (req: Request, res: Response) => {
   const result = await SubmissionServices.getById(req.params.id as string);
@@ -76,5 +103,6 @@ export const SubmissionController = {
   createBulk: createBulkSubmissions,
   getStatus: getSubmissionStatus,
   getByAssignment: getSubmissionByAssignment,
+  getByAssignmentPaginated: getSubmissionByAssignmentPaginated,
   getById: getSubmissionById,
 };
