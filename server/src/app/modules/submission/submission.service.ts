@@ -1,5 +1,7 @@
 import { checkQueue } from "../../worker/checkQueue";
 import { ISubmission, Submission } from "./submission.model";
+import { Result } from "../result/result.model";
+import { ReviewQueue } from "../reviewQueue/reviewQueue.model";
 
 export interface CreateSubmissionDTO {
   assignmentId: string;
@@ -140,6 +142,78 @@ const getSubmissionById = async (id: string): Promise<ISubmission | null> => {
   return Submission.findById(id);
 };
 
+const updateSubmission = async (
+  id: string,
+  data: Partial<CreateSubmissionDTO>,
+): Promise<ISubmission | null> => {
+  const submission = await Submission.findById(id);
+  if (!submission) return null;
+
+  if (data.studentName !== undefined) submission.studentName = data.studentName;
+
+  let urlChanged = false;
+  if (data.liveUrl !== undefined && data.liveUrl !== submission.liveUrl) {
+    if (!data.liveUrl.startsWith("http")) {
+      throw new Error("liveUrl must be a valid URL starting with http");
+    }
+    submission.liveUrl = data.liveUrl;
+    urlChanged = true;
+  }
+
+  if (data.githubUrl !== undefined && data.githubUrl !== submission.githubUrl) {
+    if (!data.githubUrl.includes("github.com")) {
+      throw new Error("githubUrl must be a valid GitHub URL");
+    }
+    submission.githubUrl = data.githubUrl;
+    urlChanged = true;
+  }
+
+  if (urlChanged) {
+    submission.status = "queued";
+    submission.progress = { completedChecks: 0, totalChecks: 0 };
+    submission.totalScore = undefined;
+    submission.maxScore = undefined;
+    submission.errorMessage = undefined;
+
+    await Result.deleteMany({ submissionId: id });
+    await ReviewQueue.deleteMany({ submissionId: id });
+
+    await checkQueue.add("run-checks", {
+      submissionId: id,
+      assignmentId: submission.assignmentId.toString(),
+      liveUrl: submission.liveUrl,
+      githubUrl: submission.githubUrl,
+    });
+  }
+
+  await submission.save();
+  return submission;
+};
+
+const recheckSubmission = async (id: string): Promise<ISubmission | null> => {
+  const submission = await Submission.findById(id);
+  if (!submission) return null;
+
+  submission.status = "queued";
+  submission.progress = { completedChecks: 0, totalChecks: 0 };
+  submission.totalScore = undefined;
+  submission.maxScore = undefined;
+  submission.errorMessage = undefined;
+
+  await Result.deleteMany({ submissionId: id });
+  await ReviewQueue.deleteMany({ submissionId: id });
+
+  await checkQueue.add("run-checks", {
+    submissionId: id,
+    assignmentId: submission.assignmentId.toString(),
+    liveUrl: submission.liveUrl,
+    githubUrl: submission.githubUrl,
+  });
+
+  await submission.save();
+  return submission;
+};
+
 export const SubmissionServices = {
   create: createSubmission,
   createBulk: createBulkSubmissions,
@@ -147,4 +221,6 @@ export const SubmissionServices = {
   getByAssignment: getSubmissionByAssignment,
   getByAssignmentPaginated: getSubmissionByAssignmentPaginated,
   getById: getSubmissionById,
+  update: updateSubmission,
+  recheck: recheckSubmission,
 };

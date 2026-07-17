@@ -2,7 +2,14 @@ import { GoogleGenerativeAI, GenerationConfig } from "@google/generative-ai";
 import dotenv from "dotenv";
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+let genAI: any;
+try {
+  if (process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY.startsWith("your_")) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+} catch (e: any) {
+  console.warn("Could not initialize GoogleGenerativeAI:", e.message);
+}
 
 const generationConfig: GenerationConfig = {
   temperature: 0.1, // low temperature = deterministic output
@@ -26,6 +33,7 @@ export interface ParsedRule {
   confidence: number;
   needsClarification: boolean;
 }
+
 const SYSTEM_PROMPT = `You are a DOM check rule generator for a web assignment checker.
 
 Given a UI requirement description, generate structured JSON rules.
@@ -53,9 +61,73 @@ RULES:
 - Cannot be tested by DOM inspection → "needsClarification" with confidence < 0.3
 - Return ONLY valid JSON. No explanation. No markdown.`;
 
+export async function parseRequirementWithDeepSeek(description: string): Promise<ParsedRule> {
+  const prompt = `${SYSTEM_PROMPT}
+  
+Requirement: "${description}"
+
+Return JSON with exactly these fields (strictly in valid JSON format, without markdown block or trailing commas):
+{
+  "checkType": "ui-element" | "ui-count" | "ui-position" | "functional-auth" | "functional-crud" | "conditional-logic" | "visual-figma" | "needsClarification",
+  "automationTier": 1 | 2 | 3,
+  "selectors": ["selector1", "selector2"],
+  "requiredState": null or { "key": "value" },
+  "confidence": 0.0 to 1.0,
+  "needsClarification": true | false
+}`;
+
+  const response = await fetch("http://localhost:11434/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "deepseek-r1:latest",
+      prompt,
+      stream: false,
+      options: {
+        temperature: 0.1
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Ollama HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const rawText = data.response || "";
+
+  let cleaned = rawText.trim();
+  if (cleaned.includes("</thought>")) {
+    cleaned = cleaned.substring(cleaned.indexOf("</thought>") + "</thought>".length).trim();
+  }
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(json)?/, "").replace(/```$/, "").trim();
+  }
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    cleaned = cleaned.substring(start, end + 1);
+  }
+
+  return JSON.parse(cleaned) as ParsedRule;
+}
+
 export async function parseRequirement(
   description: string,
 ): Promise<ParsedRule> {
+  // Check if Gemini is configured
+  const isGeminiConfigured = process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY.startsWith("your_");
+
+  if (!isGeminiConfigured || !genAI) {
+    console.log(`[IntentParser] Gemini API key not found. Using local DeepSeek R1...`);
+    try {
+      return await parseRequirementWithDeepSeek(description);
+    } catch (e: any) {
+      console.warn(`[IntentParser] DeepSeek fallback failed: ${e.message}. Using safe defaults.`);
+      return getFallbackDefault();
+    }
+  }
+
   try {
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
@@ -91,18 +163,25 @@ export async function parseRequirement(
 
     return parsed;
   } catch (err: any) {
-    console.error(
-      `Gemini Intent Parser error for "${description}":`,
-      err.message,
+    console.warn(
+      `[IntentParser] Gemini Intent Parser error for "${description}": ${err.message}. Trying local DeepSeek R1...`
     );
-    // Safe fallback — never crash the enrichment pipeline
-    return {
-      checkType: "needsClarification",
-      automationTier: 3,
-      selectors: [],
-      requiredState: null,
-      confidence: 0,
-      needsClarification: true,
-    };
+    try {
+      return await parseRequirementWithDeepSeek(description);
+    } catch (deepseekErr: any) {
+      console.error(`[IntentParser] DeepSeek R1 fallback failed: ${deepseekErr.message}`);
+      return getFallbackDefault();
+    }
   }
+}
+
+function getFallbackDefault(): ParsedRule {
+  return {
+    checkType: "needsClarification",
+    automationTier: 3,
+    selectors: [],
+    requiredState: null,
+    confidence: 0,
+    needsClarification: true,
+  };
 }

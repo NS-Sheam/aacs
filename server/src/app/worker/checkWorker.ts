@@ -88,8 +88,11 @@ const worker = new Worker<CheckJobData>(
       }
 
       // Fallback to original if enrichment not done yet
-      const reqs =
+      let reqs =
         assignment.enrichedRequirements || assignment.originalRequirements;
+      if (reqs && reqs.requirements) {
+        reqs = reqs.requirements;
+      }
 
       const threshold = assignment.confidenceThreshold ?? 0.75;
 

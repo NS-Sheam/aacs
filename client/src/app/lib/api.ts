@@ -109,6 +109,19 @@ export const getResultBySubmissionId=async (submissionId: string): Promise<any> 
   return apiFetch(`/api/v1/results/${submissionId}`);
 }
 
-export const getSubmissionsByAssignmentId=async (assignmentId: string,page: number,limit: number): Promise<any> => {
+export const getSubmissionsByAssignmentId = async (assignmentId: string,page: number,limit: number): Promise<any> => {
   return apiFetch(`/api/v1/submissions/assignment/${assignmentId}/paginated?page=${page}&limit=${limit}`);
+}
+
+export const recheckSubmission = async (submissionId: string): Promise<any> => {
+  return apiFetch(`/api/v1/submissions/${submissionId}/recheck`, {
+    method: "POST",
+  });
+}
+
+export const updateSubmission = async (submissionId: string, payload: { studentName?: string; liveUrl?: string; githubUrl?: string }): Promise<any> => {
+  return apiFetch(`/api/v1/submissions/${submissionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
