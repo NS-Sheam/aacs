@@ -103,6 +103,38 @@ const getSubmissionByAssignment = async (
     .sort({ createdAt: -1 });
 };
 
+// Get submissions for an assignment, paginated (newest first)
+const getSubmissionByAssignmentPaginated = async (
+  assignmentId: string,
+  page = 1,
+  limit = 20,
+): Promise<{
+  submissions: ISubmission[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> => {
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, limit);
+  const skip = (safePage - 1) * safeLimit;
+
+  const [submissions, total] = await Promise.all([
+    Submission.find({ assignmentId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(safeLimit)
+      .select("-__v"),
+    Submission.countDocuments({ assignmentId }),
+  ]);
+
+  return {
+    submissions,
+    total,
+    page: safePage,
+    totalPages: Math.ceil(total / safeLimit),
+  };
+};
+
 // Get single submission with full data
 const getSubmissionById = async (id: string): Promise<ISubmission | null> => {
   return Submission.findById(id);
@@ -113,5 +145,6 @@ export const SubmissionServices = {
   createBulk: createBulkSubmissions,
   getStatus: getSubmissionStatus,
   getByAssignment: getSubmissionByAssignment,
+  getByAssignmentPaginated: getSubmissionByAssignmentPaginated,
   getById: getSubmissionById,
 };
