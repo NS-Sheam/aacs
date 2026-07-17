@@ -39,7 +39,7 @@ const navItems = [
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-700 shadow-xl transform transition-transform duration-300 ease-in-out z-40 md:z-50 ${
+        className={`fixed left-0 top-0 h-screen w-64 dark-glass-card shadow-2xl transform transition-transform duration-300 ease-in-out z-40 md:z-50 ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -52,12 +52,12 @@ const navItems = [
 
         <div className="flex flex-col h-full pt-6 pb-6">
           <Link href="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-6 mb-8 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all group-hover:scale-110">
-              <ClipboardList className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-indigo-500/20 group-hover:shadow-lg transition-all duration-300 group-hover:scale-105">
+              <ClipboardList className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white">AACS</h1>
-              <p className="text-xs text-slate-400">Programming Hero</p>
+              <h1 className="text-sm font-bold text-white tracking-wide">AACS</h1>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Programming Hero</p>
             </div>
           </Link>
 
@@ -69,16 +69,19 @@ const navItems = [
                   key={href}
                   href={href}
                   onClick={() => setIsOpen(false)}
-                  className={`flex items-start gap-3 px-4 py-3 rounded-lg transition-all group ${
+                  className={`flex items-start gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
                     isActive
-                      ? 'bg-blue-600/80 text-white shadow-lg'
-                      : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                      ? 'bg-blue-600/90 text-white shadow-lg shadow-blue-500/10'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isActive ? 'text-blue-200' : 'group-hover:text-blue-300'}`} />
+                  {isActive && (
+                    <div className="absolute left-0 top-3 bottom-3 w-1 bg-white rounded-r-md" />
+                  )}
+                  <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-400'}`} />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium leading-tight ${isActive ? 'text-white' : ''}`}>{label}</p>
-                    <p className={`text-xs leading-tight ${isActive ? 'text-blue-100' : 'text-slate-500 group-hover:text-slate-400'}`}>
+                    <p className={`text-sm font-semibold leading-tight ${isActive ? 'text-white' : 'text-slate-200'}`}>{label}</p>
+                    <p className={`text-xs mt-0.5 leading-tight transition-colors duration-300 ${isActive ? 'text-blue-100' : 'text-slate-400 group-hover:text-slate-300'}`}>
                       {description}
                     </p>
                   </div>
@@ -86,8 +89,6 @@ const navItems = [
               )
             })}
           </nav>
-
-         
         </div>
       </aside>
 

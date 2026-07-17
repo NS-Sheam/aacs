@@ -98,6 +98,33 @@ const getSubmissionById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// PATCH /api/submissions/:id
+const updateSubmission = catchAsync(async (req: Request, res: Response) => {
+  const result = await SubmissionServices.update(
+    req.params.id as string,
+    req.body,
+  );
+
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    success: true,
+    message: "Submission updated successfully",
+    data: result,
+  });
+});
+
+// POST /api/submissions/:id/recheck
+const recheckSubmission = catchAsync(async (req: Request, res: Response) => {
+  const result = await SubmissionServices.recheck(req.params.id as string);
+
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    success: true,
+    message: "Recheck started successfully",
+    data: result,
+  });
+});
+
 export const SubmissionController = {
   create: createSubmission,
   createBulk: createBulkSubmissions,
@@ -105,4 +132,6 @@ export const SubmissionController = {
   getByAssignment: getSubmissionByAssignment,
   getByAssignmentPaginated: getSubmissionByAssignmentPaginated,
   getById: getSubmissionById,
+  update: updateSubmission,
+  recheck: recheckSubmission,
 };

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAssignmentById, getEnrichedAssignmentById } from "@/app/lib/api";
 import Link from "next/link";
+import SubmissionList from "@/components/submissions/SubmissionList";
 
 export default async function AssignmentDetailPage({
   params,
@@ -293,6 +294,10 @@ export default async function AssignmentDetailPage({
           </div>
 
 
+        </section>
+
+        <section className="pt-4">
+          <SubmissionList assignmentId={assignment.data._id} />
         </section>
 
       </div>

@@ -11,4 +11,6 @@ router.get(
 router.get("/assignment/:assignmentId", SubmissionController.getByAssignment);
 router.get("/:id/status", SubmissionController.getStatus);
 router.get("/:id", SubmissionController.getById);
+router.patch("/:id", SubmissionController.update);
+router.post("/:id/recheck", SubmissionController.recheck);
 export const SubmissionsRoutes = router;

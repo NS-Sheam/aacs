@@ -69,16 +69,53 @@ export async function enrichAssignment(
     throw new Error(`Assignment not found: ${assignmentId}`);
   }
 
+  // If already enriched, compute and return stats directly to avoid re-invoking LLMs
+  if (assignment.enrichedRequirements) {
+    let totalRequirements = 0;
+    let enrichedCount = 0;
+    let needsClarification = 0;
+    let tier1 = 0;
+    let tier2 = 0;
+    let tier3 = 0;
+
+    for (const section of Object.values(assignment.enrichedRequirements)) {
+      for (const [reqKey, req] of Object.entries(
+        section as Record<string, any>,
+      )) {
+        if (reqKey.startsWith("sub_req")) continue;
+        totalRequirements++;
+        if ((req as any).checkType) enrichedCount++;
+        if ((req as any).needsClarification) needsClarification++;
+        const tier = (req as any).automationTier;
+        if (tier === 1) tier1++;
+        else if (tier === 2) tier2++;
+        else if (tier === 3) tier3++;
+      }
+    }
+
+    return {
+      assignmentId,
+      totalRequirements,
+      enriched: enrichedCount,
+      needsClarification,
+      tier1,
+      tier2,
+      tier3,
+    };
+  }
+
   console.log(
     `\nGemini enrichment started — Assignment ${assignment.assignmentNo} · Batch ${assignment.batch}`,
   );
 
   const enrichedRequirements: Record<string, any> = {};
 
+  const rawReqs = assignment.originalRequirements;
+  const sections = rawReqs.requirements ? rawReqs.requirements : rawReqs;
+
   // Process section by section
-  for (const [section, reqs] of Object.entries(
-    assignment.originalRequirements,
-  )) {
+  for (const [section, reqs] of Object.entries(sections)) {
+    if (section === "assignmentMeta") continue;
     console.log(`  Section: ${section}`);
     enrichedRequirements[section] = await enrichSection(
       reqs as Record<string, any>,

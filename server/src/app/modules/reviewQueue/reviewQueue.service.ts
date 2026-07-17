@@ -31,7 +31,7 @@ const resolve = async (
       resolvedBy,
       resolvedAt: new Date(),
     },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (!item) return null;

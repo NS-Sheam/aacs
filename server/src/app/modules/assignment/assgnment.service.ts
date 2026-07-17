@@ -168,7 +168,7 @@ const activate = async (id: string) => {
   const assignment = await Assignment.findByIdAndUpdate(
     id,
     { status: "active" },
-    { new: true },
+    { returnDocument: "after" },
   );
   return assignment;
 };
@@ -178,7 +178,7 @@ const archive = async (id: string) => {
   const assignment = await Assignment.findByIdAndUpdate(
     id,
     { status: "archived" },
-    { new: true },
+    { returnDocument: "after" },
   );
   return assignment;
 };
@@ -194,7 +194,7 @@ const saveEnriched = async (
       enrichedRequirements,
       status: "active",
     },
-    { new: true },
+    { returnDocument: "after" },
   );
   return assignment;
 };

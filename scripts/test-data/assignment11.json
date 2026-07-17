@@ -1,4 +1,4 @@
-﻿{
+{
   "assignmentMeta": {
     "title": "Assignment 11 - Scholarship Management System",
     "batch": 12,
@@ -9,7 +9,7 @@
     "authentication": {
       "req-1": {
         "description": "Navbar shows login/register links when the user is not logged in.",
-        "number": "1",
+        "number": "10",
         "correct": false,
         "message": "",
         "checkType": "functional-ui",
@@ -29,7 +29,7 @@
       },
       "req-2": {
         "description": "Navbar shows logged-in user menu after authentication.",
-        "number": "1",
+        "number": "10",
         "correct": false,
         "message": "",
         "checkType": "functional-ui",
@@ -52,7 +52,7 @@
     "scholarships": {
       "req-3": {
         "description": "Home page displays six scholarship cards loaded dynamically from the database.",
-        "number": "2",
+        "number": "10",
         "correct": false,
         "message": "",
         "checkType": "db-backed-ui",
@@ -74,7 +74,7 @@
     "applications": {
       "req-4": {
         "description": "Pay action is visible only if application status is pending and payment status is unpaid.",
-        "number": "1",
+        "number": "10",
         "correct": false,
         "message": "",
         "checkType": "conditional-ui",
@@ -98,7 +98,7 @@
     "security": {
       "req-5": {
         "description": "Protected APIs validate JWT middleware before returning private data.",
-        "number": "2",
+        "number": "10",
         "correct": false,
         "message": "",
         "checkType": "security-check",
@@ -112,6 +112,28 @@
           }
         ],
         "confidenceThreshold": 0.9
+      }
+    },
+    "Challenges-Requirements": {
+      "req-6": {
+        "description": "Challenge: Implement user profile page with dynamic details and statistics.",
+        "number": "10",
+        "correct": false,
+        "message": "",
+        "checkType": "ui-element",
+        "automationTier": 2,
+        "requiredState": {
+          "authRole": "student"
+        },
+        "rules": [
+          {
+            "kind": "state-visible",
+            "target": "profile page stats",
+            "selectorHint": ".profile-stats, [data-testid='profile-stats']",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.8
       }
     }
   }
