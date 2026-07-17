@@ -7,9 +7,9 @@ import { getReviewQueueItems } from "../lib/api";
 export default async function ReviewPage({searchParams}: {searchParams: {submissionId: string}}) {
     const {submissionId}=await searchParams
     const res = await getReviewQueueItems(submissionId);
-    const queueItems: ReviewItem[] = res.data;
-    const pending = queueItems?.filter((i) => i.status === "pending");
-    const resolved = queueItems?.filter((i) => i.status === "resolved");
+    const queueItems: ReviewItem[] = res?.data || [];
+    const pending = queueItems?.filter((i) => i.status === "pending") || [];
+    const resolved = queueItems?.filter((i) => i.status === "resolved") || [];
 
     
 

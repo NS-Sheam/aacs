@@ -61,7 +61,30 @@ RULES:
 - Cannot be tested by DOM inspection → "needsClarification" with confidence < 0.3
 - Return ONLY valid JSON. No explanation. No markdown.`;
 
+let discoveredDeepSeekModel: string | null = null;
+
+async function getDeepSeekModelName(): Promise<string> {
+  if (discoveredDeepSeekModel) return discoveredDeepSeekModel;
+  try {
+    const res = await fetch("http://localhost:11434/api/tags");
+    if (res.ok) {
+      const data = (await res.json()) as any;
+      const models = data.models || [];
+      const found = models.find((m: any) => m.name.includes("deepseek-r1"));
+      if (found) {
+        discoveredDeepSeekModel = found.name;
+        console.log(`[IntentParser] Detected Ollama DeepSeek model: ${discoveredDeepSeekModel}`);
+        return discoveredDeepSeekModel;
+      }
+    }
+  } catch (e) {
+    // Fallback to default tag if API is unreachable
+  }
+  return "deepseek-r1:latest";
+}
+
 export async function parseRequirementWithDeepSeek(description: string): Promise<ParsedRule> {
+  const modelName = await getDeepSeekModelName();
   const prompt = `${SYSTEM_PROMPT}
   
 Requirement: "${description}"
@@ -80,7 +103,7 @@ Return JSON with exactly these fields (strictly in valid JSON format, without ma
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "deepseek-r1:latest",
+      model: modelName,
       prompt,
       stream: false,
       options: {

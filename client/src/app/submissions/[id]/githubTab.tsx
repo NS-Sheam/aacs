@@ -11,6 +11,14 @@ import {
 } from "lucide-react";
 
 const GithubTab = ({ githubSection }: { githubSection: any }) => {
+  if (!githubSection) {
+    return (
+      <div className="p-6 text-sm text-slate-500 bg-slate-50 rounded-xl border border-slate-200">
+        No GitHub activity check details available for this submission.
+      </div>
+    );
+  }
+
   const isPassed = githubSection.correct;
 
   return (
@@ -93,7 +101,7 @@ const GithubTab = ({ githubSection }: { githubSection: any }) => {
 
 
         {/* Evidence */}
-        {githubSection.evidence?.selectorUsed && (
+        {(githubSection.evidence?.selectorUsed || githubSection.evidence?.domSnapshot) && (
           <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
               <Code2 className="w-4 h-4 text-gray-500" />
@@ -105,14 +113,15 @@ const GithubTab = ({ githubSection }: { githubSection: any }) => {
 
             <pre className="p-4 text-xs text-gray-700 overflow-x-auto leading-relaxed">
               {(() => {
+                const evidenceData = githubSection.evidence.domSnapshot || githubSection.evidence.selectorUsed;
                 try {
                   return JSON.stringify(
-                    JSON.parse(githubSection.evidence.selectorUsed),
+                    JSON.parse(evidenceData),
                     null,
                     2
                   );
                 } catch {
-                  return githubSection.evidence.selectorUsed;
+                  return evidenceData;
                 }
               })()}
             </pre>

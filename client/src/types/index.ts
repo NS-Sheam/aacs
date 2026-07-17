@@ -53,6 +53,7 @@ export interface AssignmentUpload{
 export interface SubmissionAssignment {
   assignmentId: string;
   studentName: string;
+  studentEmail?: string;
   liveUrl: string;
   githubUrl: string;
         
@@ -86,6 +87,7 @@ export interface SubmissionData {
   _id: string
   assignmentId: string
   studentName: string
+  studentEmail?: string
   liveUrl: string
   githubUrl: string
   status: string

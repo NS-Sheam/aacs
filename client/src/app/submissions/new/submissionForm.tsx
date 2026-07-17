@@ -24,6 +24,7 @@ export default function SubmissionForm({
     const [form, setForm] = useState({
         assignmentId,
         studentName: "",
+        studentEmail: "",
         liveUrl: "",
         githubUrl: "",
     });
@@ -87,6 +88,19 @@ export default function SubmissionForm({
                             setForm({
                                 ...form,
                                 studentName: v,
+                            })
+                        }
+                    />
+
+                    <Input
+                        icon={<User size={18} />}
+                        label="Student Email"
+                        value={form.studentEmail}
+                        placeholder="student@example.com"
+                        onChange={(v:any) =>
+                            setForm({
+                                ...form,
+                                studentEmail: v,
                             })
                         }
                     />

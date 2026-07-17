@@ -4,6 +4,7 @@ const router = Router();
 
 router.post("/", SubmissionController.create);
 router.post("/bulk", SubmissionController.createBulk);
+router.get("/", SubmissionController.getAll);
 router.get(
   "/assignment/:assignmentId/paginated",
   SubmissionController.getByAssignmentPaginated,
