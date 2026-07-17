@@ -125,6 +125,18 @@ const recheckSubmission = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// GET /api/submissions
+const getAllSubmissions = catchAsync(async (req: Request, res: Response) => {
+  const result = await SubmissionServices.getAll();
+
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    success: true,
+    message: "All submissions retrieved successfully",
+    data: result,
+  });
+});
+
 export const SubmissionController = {
   create: createSubmission,
   createBulk: createBulkSubmissions,
@@ -134,4 +146,5 @@ export const SubmissionController = {
   getById: getSubmissionById,
   update: updateSubmission,
   recheck: recheckSubmission,
+  getAll: getAllSubmissions,
 };

@@ -41,3 +41,80 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.6);
 }
+
+/* Enforce dark mode high contrast readability */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0b1329 !important;
+    color: #f8fafc !important;
+  }
+  
+  /* Text Contrast Overrides */
+  .text-zinc-900, .text-gray-900, .text-slate-900, .text-black {
+    color: #ffffff !important;
+  }
+  
+  .text-zinc-700, .text-gray-700, .text-slate-700, .text-zinc-800 {
+    color: #cbd5e1 !important;
+  }
+  
+  .text-zinc-600, .text-gray-600, .text-slate-600 {
+    color: #94a3b8 !important;
+  }
+  
+  .text-zinc-500, .text-gray-500, .text-slate-500, .text-zinc-400 {
+    color: #64748b !important;
+  }
+
+  /* Box & Container Overrides */
+  .bg-white, .bg-white\/70 {
+    background-color: #111a33 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .bg-zinc-50, .bg-gray-50, .bg-slate-50, .bg-slate-50\/70 {
+    background-color: #0d162d !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .border, .border-slate-200, .border-gray-200, .border-slate-100, .border-b, .border-t, .border-r, .border-l {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Form Controls */
+  input, textarea, select {
+    background-color: #080f20 !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+  }
+  
+  input::placeholder, textarea::placeholder {
+    color: #475569 !important;
+  }
+
+  /* Tables & Lists */
+  .divide-y > * + * {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  
+  .hover\:bg-gray-50:hover, .hover\:bg-slate-50\/40:hover, .hover\:bg-slate-50:hover {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+  }
+
+  /* Badges & Accents */
+  .bg-slate-100 {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+  }
+  
+  /* Sidebar Specifics */
+  aside {
+    background: rgba(10, 18, 38, 0.95) !important;
+    border-right-color: rgba(255, 255, 255, 0.08) !important;
+  }
+}

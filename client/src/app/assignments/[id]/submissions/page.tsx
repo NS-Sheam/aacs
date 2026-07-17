@@ -31,7 +31,7 @@ export default async function SubmissionListPage({
    const res = await getSubmissionsByAssignmentId(id, Number(page) || 1, 10);
 
 
-  const submissions = res?.data?.submissions ?? [];
+  const submissions = res?.data ?? [];
 
   return (
     <div className="space-y-6 p-8">

@@ -6,6 +6,7 @@ import { ReviewQueue } from "../reviewQueue/reviewQueue.model";
 export interface CreateSubmissionDTO {
   assignmentId: string;
   studentName?: string;
+  studentEmail?: string;
   liveUrl: string;
   githubUrl: string;
 }
@@ -150,6 +151,7 @@ const updateSubmission = async (
   if (!submission) return null;
 
   if (data.studentName !== undefined) submission.studentName = data.studentName;
+  if (data.studentEmail !== undefined) submission.studentEmail = data.studentEmail;
 
   let urlChanged = false;
   if (data.liveUrl !== undefined && data.liveUrl !== submission.liveUrl) {
@@ -214,6 +216,12 @@ const recheckSubmission = async (id: string): Promise<ISubmission | null> => {
   return submission;
 };
 
+const getAllSubmissions = async (): Promise<ISubmission[]> => {
+  return Submission.find()
+    .populate("assignmentId", "title assignmentNo batch")
+    .sort({ createdAt: -1 });
+};
+
 export const SubmissionServices = {
   create: createSubmission,
   createBulk: createBulkSubmissions,
@@ -223,4 +231,5 @@ export const SubmissionServices = {
   getById: getSubmissionById,
   update: updateSubmission,
   recheck: recheckSubmission,
+  getAll: getAllSubmissions,
 };

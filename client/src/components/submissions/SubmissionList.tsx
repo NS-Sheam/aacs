@@ -9,6 +9,7 @@ import StatusBadge from '@/components/StatusBadge'
 interface Submission {
   _id: string
   studentName?: string
+  studentEmail?: string
   liveUrl: string
   githubUrl: string
   status: string
@@ -27,13 +28,13 @@ export default function SubmissionList({ assignmentId }: SubmissionListProps) {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ studentName: '', liveUrl: '', githubUrl: '' })
+  const [editForm, setEditForm] = useState({ studentName: '', studentEmail: '', liveUrl: '', githubUrl: '' })
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({})
 
   const fetchSubmissions = async () => {
     try {
       const res = await getSubmissionsByAssignmentId(assignmentId, 1, 100)
-      setSubmissions(res?.data?.submissions ?? [])
+      setSubmissions(res?.data ?? [])
     } catch (err) {
       console.error('Error fetching submissions:', err)
     } finally {
@@ -71,6 +72,7 @@ export default function SubmissionList({ assignmentId }: SubmissionListProps) {
     setEditingId(sub._id)
     setEditForm({
       studentName: sub.studentName || '',
+      studentEmail: sub.studentEmail || '',
       liveUrl: sub.liveUrl,
       githubUrl: sub.githubUrl,
     })
@@ -148,6 +150,13 @@ export default function SubmissionList({ assignmentId }: SubmissionListProps) {
                           className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <input
+                          type="email"
+                          value={editForm.studentEmail}
+                          onChange={e => setEditForm({ ...editForm, studentEmail: e.target.value })}
+                          placeholder="Student Email"
+                          className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input
                           type="text"
                           value={editForm.liveUrl}
                           onChange={e => setEditForm({ ...editForm, liveUrl: e.target.value })}
@@ -164,8 +173,11 @@ export default function SubmissionList({ assignmentId }: SubmissionListProps) {
                       </div>
                     ) : (
                       <div className="space-y-1">
-                        <p className="font-semibold text-slate-800 text-sm">
-                          {sub.studentName || 'Unknown Student'}
+                        <p className="font-semibold text-slate-800 text-sm flex flex-wrap items-center gap-1.5">
+                          <span>{sub.studentName || 'Unknown Student'}</span>
+                          {sub.studentEmail && (
+                            <span className="font-normal text-xs text-slate-500">({sub.studentEmail})</span>
+                          )}
                         </p>
                         <div className="flex items-center gap-3 text-xs text-slate-500">
                           <a

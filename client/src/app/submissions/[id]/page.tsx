@@ -20,7 +20,7 @@ const SubmissionDetails = async ({ params }: Props) => {
   const res1 = await summaryResults(id);
   const summary: Summary = res1?.data;
   const res2 = await getResultBySubmissionId(id);
-  const result: any = res2?.data;
+  const result: any = res2?.data || {};
    const githubSection = result["GitHub"]?.[0];
   const reqSections = Object.entries(result).filter(([k]) => k !== "GitHub");
   return (

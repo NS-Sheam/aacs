@@ -125,3 +125,7 @@ export const updateSubmission = async (submissionId: string, payload: { studentN
     body: JSON.stringify(payload),
   });
 }
+
+export const getAllSubmissions = async (): Promise<any> => {
+  return apiFetch("/api/v1/submissions");
+}
