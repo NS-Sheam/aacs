@@ -10,6 +10,8 @@ export default function SubmissionsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [selectedAssignmentId, setSelectedAssignmentId] = useState('')
   const [studentName, setStudentName] = useState('')
+  const [studentId, setStudentId] = useState('')
+  const [studentEmail, setStudentEmail] = useState('')
   const [liveUrl, setLiveUrl] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
 
@@ -46,6 +48,9 @@ export default function SubmissionsPage() {
 
     const errs: string[] = []
     if (!selectedAssignmentId) errs.push('Please select an assignment')
+    if (!studentName.trim()) errs.push('Student Name is required')
+    if (!studentId.trim()) errs.push('Student ID is required (e.g. WEB13-0001)')
+    if (!studentEmail.trim()) errs.push('Student Email is required')
     if (!liveUrl.trim().startsWith('http')) errs.push('Live Link must start with http:// or https://')
     if (!githubUrl.trim().includes('github.com')) errs.push('GitHub Link must be a valid github.com repository URL')
 
@@ -57,7 +62,9 @@ export default function SubmissionsPage() {
     try {
       const payload: CreateSubmissionDTO = {
         assignmentId: selectedAssignmentId,
-        studentName: studentName.trim() || 'Anonymous Student',
+        studentName: studentName.trim(),
+        studentId: studentId.trim(),
+        email: studentEmail.trim(),
         liveUrl: liveUrl.trim(),
         githubUrl: githubUrl.trim(),
       }
@@ -168,18 +175,55 @@ export default function SubmissionsPage() {
                     </select>
                   </div>
 
-                  {/* Student Name / Email */}
+                  {/* Student Name */}
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Student Email / Name (Optional)
+                      Student Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                       <input
                         type="text"
-                        placeholder="e.g. student@example.com"
+                        required
+                        placeholder="e.g. John Doe"
                         value={studentName}
                         onChange={(e) => setStudentName(e.target.value)}
+                        className="h-11 w-full rounded-lg border border-slate-300 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Student ID */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Student ID <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. WEB13-0001"
+                        value={studentId}
+                        onChange={(e) => setStudentId(e.target.value)}
+                        className="h-11 w-full rounded-lg border border-slate-300 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Student Email */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Student Email <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. john@gmail.com"
+                        value={studentEmail}
+                        onChange={(e) => setStudentEmail(e.target.value)}
                         className="h-11 w-full rounded-lg border border-slate-300 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       />
                     </div>

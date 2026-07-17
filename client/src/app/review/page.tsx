@@ -1,15 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle, Loader2, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Check, X, RefreshCw, Search, Eye, Filter, Code } from 'lucide-react'
+import { CheckCircle, Loader2, AlertTriangle, MessageSquare, Check, RefreshCw, Search, Filter, Code, Send } from 'lucide-react'
 import { fetchReviewQueue, resolveReviewItem } from '../lib/api'
+import { useToast } from '@/components/Toast'
 
 export default function ReviewQueuePage() {
+  const { toast } = useToast()
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submittingId, setSubmittingId] = useState<string | null>(null)
-  const [notesInputs, setNotesInputs] = useState<Record<string, string>>({})
+  // Per-item state: { marks, feedback }
+  const [itemInputs, setItemInputs] = useState<Record<string, { marks: string; feedback: string }>>({})
 
   // Filtering & search states
   const [searchQuery, setSearchQuery] = useState('')
@@ -23,6 +26,13 @@ export default function ReviewQueuePage() {
     try {
       const data = await fetchReviewQueue()
       setItems(data)
+      // Pre-populate marks with the full (max) mark for each item
+      const initialInputs: Record<string, { marks: string; feedback: string }> = {}
+      data.forEach((item: any) => {
+        const maxMark = item.resultId?.marks ?? 0
+        initialInputs[item._id] = { marks: String(maxMark), feedback: '' }
+      })
+      setItemInputs(initialInputs)
       setLoading(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch review queue')
@@ -34,23 +44,45 @@ export default function ReviewQueuePage() {
     loadQueue()
   }, [])
 
-  const handleResolve = async (itemId: string, decision: 'approved' | 'rejected') => {
-    setSubmittingId(itemId)
-    try {
-      const notes = notesInputs[itemId] || ''
-      await resolveReviewItem(itemId, decision, notes)
-      
-      // Animate/remove item from local state list
-      setItems((prev) => prev.filter((item) => item._id !== itemId))
-      setSubmittingId(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Resolution failed')
-      setSubmittingId(null)
-    }
+  const updateInput = (itemId: string, field: 'marks' | 'feedback', value: string) => {
+    setItemInputs(prev => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], [field]: value },
+    }))
   }
 
-  const handleNotesChange = (itemId: string, val: string) => {
-    setNotesInputs((prev) => ({ ...prev, [itemId]: val }))
+  const handleSubmit = async (item: any) => {
+    const res = item.resultId || {}
+    const maxMark = res.marks ?? 0
+    const inputState = itemInputs[item._id] || { marks: String(maxMark), feedback: '' }
+
+    const marksNum = Number(inputState.marks)
+    if (inputState.marks.trim() === '' || isNaN(marksNum)) {
+      toast('Please enter a valid mark', 'error')
+      return
+    }
+    if (marksNum < 0) {
+      toast('Mark cannot be negative', 'error')
+      return
+    }
+    if (marksNum > maxMark) {
+      toast(`Mark cannot exceed the section maximum of ${maxMark}`, 'error')
+      return
+    }
+
+    // Derive approval status from marks
+    const decision: 'approved' | 'rejected' = marksNum > 0 ? 'approved' : 'rejected'
+
+    setSubmittingId(item._id)
+    try {
+      await resolveReviewItem(item._id, decision, inputState.feedback, marksNum)
+      toast(`Review submitted: ${marksNum}/${maxMark} pts — ${decision.toUpperCase()}`, 'success')
+      setItems(prev => prev.filter(i => i._id !== item._id))
+      setSubmittingId(null)
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Resolution failed', 'error')
+      setSubmittingId(null)
+    }
   }
 
   // Deduplicate options for filters
@@ -66,12 +98,11 @@ export default function ReviewQueuePage() {
     const student = sub.studentName || ''
     const key = item.reqKey || ''
     const sec = item.section || ''
-
     const email = sub.studentEmail || sub.email || ''
     const githubUrl = sub.githubUrl || ''
     const liveUrl = sub.liveUrl || ''
 
-    const matchesSearch = 
+    const matchesSearch =
       student.toLowerCase().includes(searchQuery.toLowerCase()) ||
       email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       githubUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -91,7 +122,7 @@ export default function ReviewQueuePage() {
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <main className="flex-1 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-          
+
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -213,18 +244,33 @@ export default function ReviewQueuePage() {
                 const sub = item.submissionId || {}
                 const assg = sub.assignmentId || {}
                 const res = item.resultId || {}
-                const notes = notesInputs[item._id] || ''
+                const maxMark = res.marks ?? 0
+                const inputState = itemInputs[item._id] || { marks: String(maxMark), feedback: '' }
+                const marksNum = Number(inputState.marks)
+                const isSubmitting = submittingId === item._id
 
-                // Description and Check Message updates
+                // Determine preview badge
+                let previewBadge = null
+                if (!isNaN(marksNum) && inputState.marks.trim() !== '') {
+                  if (marksNum === maxMark && maxMark > 0) {
+                    previewBadge = <span className="text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">Full Mark</span>
+                  } else if (marksNum > 0) {
+                    previewBadge = <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">Partial Mark</span>
+                  } else {
+                    previewBadge = <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Rejected (0 pts)</span>
+                  }
+                }
+
+                // Description and Check Message
                 const requirementDescription = item.description || res.description || "No description provided."
                 const checkStatusMessage = res.message || "Manual check required."
                 const selectorUsed = res.evidence?.selectorUsed || ""
                 const liveUrl = sub.liveUrl || ""
                 const githubUrl = sub.githubUrl || ""
-                
+
                 return (
                   <div key={item._id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row transition-all hover:shadow-md">
-                    
+
                     {/* Details Column */}
                     <div className="p-6 flex-1 min-w-0 space-y-4 border-r border-slate-100">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -240,7 +286,6 @@ export default function ReviewQueuePage() {
                       <div>
                         {(() => {
                           const nameStr = sub.studentName || 'Anonymous Student'
-                          // Extract email from name (e.g. "Sakib (sakib@gmail.com)" or "sakib@gmail.com")
                           const emailMatch = nameStr.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/)
                           const emailText = emailMatch ? emailMatch[1] : ""
                           const displayName = emailMatch ? nameStr.replace(emailMatch[0], "").replace(/[()]/g, "").trim() : nameStr
@@ -269,7 +314,7 @@ export default function ReviewQueuePage() {
                           <span>Section: {item.section}</span>
                           <span>Key: {item.reqKey}</span>
                         </div>
-                        
+
                         <div>
                           <label className="block text-3xs font-extrabold uppercase tracking-wider text-slate-400 mb-0.5">Requirement Description</label>
                           <p className="text-sm text-slate-800 font-semibold leading-relaxed">
@@ -303,52 +348,81 @@ export default function ReviewQueuePage() {
                     </div>
 
                     {/* Actions Column */}
-                    <div className="p-6 md:w-80 flex flex-col justify-between bg-slate-50/50 space-y-4">
-                      {/* Notes Input */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                          Review Notes (Optional)
-                        </label>
-                        <div className="relative">
-                          <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                          <textarea
-                            placeholder="Add manual override feedback..."
-                            value={notes}
-                            onChange={(e) => handleNotesChange(item._id, e.target.value)}
-                            disabled={submittingId === item._id}
-                            className="w-full h-24 rounded-xl border border-slate-300 pl-9 pr-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 bg-white"
-                          />
+                    <div className="p-6 md:w-80 flex flex-col gap-4 bg-slate-50/50 shrink-0">
+
+                      {/* Mark Input */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            Mark Awarded
+                          </label>
+                          <span className="text-xs text-slate-400 font-semibold">Max: <span className="text-slate-700 font-bold">{maxMark}</span></span>
                         </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max={maxMark}
+                          step="0.5"
+                          value={inputState.marks}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            updateInput(item._id, 'marks', raw)
+                          }}
+                          disabled={isSubmitting}
+                          className={`w-full h-12 rounded-xl border-2 px-4 text-lg font-bold text-slate-800 outline-none transition bg-white
+                            ${!isNaN(marksNum) && marksNum > maxMark
+                              ? 'border-red-400 ring-2 ring-red-200'
+                              : 'border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                            }`}
+                          placeholder="0"
+                        />
+                        {/* Validation warning */}
+                        {!isNaN(marksNum) && marksNum > maxMark && (
+                          <p className="text-xs text-red-500 font-semibold flex items-center gap-1">
+                            <AlertTriangle className="h-3.5 w-3.5" /> Cannot exceed {maxMark}
+                          </p>
+                        )}
+                        {/* Live badge */}
+                        {previewBadge && (
+                          <div className="pt-0.5">{previewBadge}</div>
+                        )}
                       </div>
 
-                      {/* Decision Buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleResolve(item._id, 'approved')}
-                          disabled={submittingId === item._id}
-                          className="flex-1 inline-flex justify-center items-center gap-1.5 rounded-xl bg-green-600 py-3 px-3 text-sm font-semibold text-white hover:bg-green-700 transition"
-                        >
-                          {submittingId === item._id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <ThumbsUp className="h-4 w-4" />
-                          )}
-                          Approve
-                        </button>
-
-                        <button
-                          onClick={() => handleResolve(item._id, 'rejected')}
-                          disabled={submittingId === item._id}
-                          className="flex-1 inline-flex justify-center items-center gap-1.5 rounded-xl bg-red-600 py-3 px-3 text-sm font-semibold text-white hover:bg-red-700 transition"
-                        >
-                          {submittingId === item._id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <ThumbsDown className="h-4 w-4" />
-                          )}
-                          Reject
-                        </button>
+                      {/* Feedback Textarea */}
+                      <div className="space-y-2 flex-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                          <MessageSquare className="h-3.5 w-3.5" /> Instructor Feedback
+                        </label>
+                        <textarea
+                          placeholder="Add review notes / feedback for the student..."
+                          value={inputState.feedback}
+                          onChange={(e) => updateInput(item._id, 'feedback', e.target.value)}
+                          disabled={isSubmitting}
+                          rows={4}
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white resize-none"
+                        />
                       </div>
+
+                      {/* Submit Button */}
+                      <button
+                        onClick={() => handleSubmit(item)}
+                        disabled={isSubmitting || (!isNaN(marksNum) && marksNum > maxMark)}
+                        className={`w-full inline-flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition shadow-sm
+                          ${isSubmitting
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : !isNaN(marksNum) && marksNum > maxMark
+                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                              : marksNum === 0
+                                ? 'bg-red-500 hover:bg-red-600 text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
+                      >
+                        {isSubmitting ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Submitting...</>
+                        ) : (
+                          <><Send className="h-4 w-4" /> Submit Review</>
+                        )}
+                      </button>
                     </div>
                   </div>
                 )

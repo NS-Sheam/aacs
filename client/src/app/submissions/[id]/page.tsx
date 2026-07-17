@@ -8,8 +8,9 @@ import {
   RefreshCw, AlertTriangle, Layers, Calendar, ExternalLink,
   Clock, Award, AlertCircle, Camera, Tag
 } from 'lucide-react'
-import { getSubmissionResults, recheckSubmission, apiFetch } from '../../lib/api'
+import { getSubmissionResults, recheckSubmission, apiFetch, updateResultMarks } from '../../lib/api'
 import ProgressBar from '@/components/ProgressBar'
+import { useToast } from '@/components/Toast'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -25,6 +26,8 @@ export default function SubmissionDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [showScreenshot, setShowScreenshot] = useState(false)
   const [activeSection, setActiveSection] = useState<string>('all')
+  const { toast } = useToast()
+  const [gradingValues, setGradingValues] = useState<Record<string, { marks: string; feedback: string }>>({})
 
   const loadData = useCallback(async () => {
     if (!id) return
@@ -52,6 +55,19 @@ export default function SubmissionDetailsPage() {
   }, [id])
 
   useEffect(() => { loadData() }, [loadData])
+
+  useEffect(() => {
+    if (results && results.length > 0) {
+      const initial: Record<string, { marks: string; feedback: string }> = {}
+      results.forEach((r: any) => {
+        initial[r._id] = {
+          marks: String(r.obtainedMarks !== undefined ? r.obtainedMarks : (r.correct ? (r.marks || 0) : 0)),
+          feedback: r.instructorFeedback || ''
+        }
+      })
+      setGradingValues(initial)
+    }
+  }, [results])
 
   const handleRecheck = async () => {
     setRechecking(true)
@@ -305,77 +321,158 @@ export default function SubmissionDetailsPage() {
                   const isPass = item.status === 'pass'
                   const isReview = item.status === 'needsReview'
                   const isFail = !isPass && !isReview
+                  const currentScore = item.obtainedMarks !== undefined ? item.obtainedMarks : (isPass ? (item.marks || 0) : 0)
+                  const grading = gradingValues[item._id] || {
+                    marks: String(currentScore),
+                    feedback: item.instructorFeedback || ''
+                  }
 
                   return (
                     <div key={item._id}
-                      className={`rounded-xl border bg-white p-5 flex items-start gap-4 transition hover:shadow-sm ${
+                      className={`rounded-xl border bg-white p-5 flex flex-col gap-4 transition hover:shadow-sm ${
                         isPass ? 'border-l-4 border-l-green-400' :
                         isReview ? 'border-l-4 border-l-amber-400' :
                         'border-l-4 border-l-red-400'
                       }`}
                     >
-                      <div className="mt-0.5 shrink-0">
-                        {isPass ? (
-                          <CheckCircle2 className="h-6 w-6 text-green-500" />
-                        ) : isReview ? (
-                          <AlertTriangle className="h-6 w-6 text-amber-500" />
-                        ) : (
-                          <XCircle className="h-6 w-6 text-red-500" />
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="font-bold text-slate-900 text-sm">{item.description}</span>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-                            isPass ? 'bg-green-50 text-green-700 border-green-200' :
-                            isReview ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            'bg-red-50 text-red-700 border-red-200'
-                          }`}>
-                            {item.status}
-                          </span>
-                          {item.marks > 0 && (
-                            <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-mono">
-                              {item.marks} pt{item.marks !== 1 ? 's' : ''}
-                            </span>
+                      <div className="flex items-start gap-4 w-full">
+                        <div className="mt-0.5 shrink-0">
+                          {isPass ? (
+                            <CheckCircle2 className="h-6 w-6 text-green-500" />
+                          ) : isReview ? (
+                            <AlertTriangle className="h-6 w-6 text-amber-500" />
+                          ) : (
+                            <XCircle className="h-6 w-6 text-red-500" />
                           )}
                         </div>
 
-                        <div className="flex items-center gap-3 text-xs text-slate-400 mb-2">
-                          <span className="flex items-center gap-1">
-                            <Layers className="h-3 w-3" /> {item.section}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Tag className="h-3 w-3" /> {item.reqKey}
-                          </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="font-bold text-slate-900 text-sm">{item.description}</span>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                              isPass ? 'bg-green-50 text-green-700 border-green-200' :
+                              isReview ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              'bg-red-50 text-red-700 border-red-200'
+                            }`}>
+                              {item.status}
+                            </span>
+                            {item.marks > 0 && (
+                              <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-mono">
+                                max {item.marks} pt{item.marks !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-400 mb-2">
+                            <span className="flex items-center gap-1">
+                              <Layers className="h-3 w-3" /> {item.section}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Tag className="h-3 w-3" /> {item.reqKey}
+                            </span>
+                          </div>
+
+                          {item.message && (
+                            <p className={`text-xs font-mono px-3 py-2 rounded-lg border ${
+                              isPass
+                                ? 'bg-green-50/50 border-green-100 text-green-800'
+                                : isReview
+                                ? 'bg-amber-50/50 border-amber-100 text-amber-800'
+                                : 'bg-red-50/50 border-red-100 text-red-800'
+                            }`}>
+                              {item.message}
+                            </p>
+                          )}
+
+                          {item.instructorFeedback && (
+                            <div className="mt-2 text-xs bg-indigo-50 border border-indigo-100 text-indigo-900 px-3 py-2 rounded-lg font-medium">
+                              <span className="font-bold">Instructor feedback:</span> {item.instructorFeedback}
+                            </div>
+                          )}
                         </div>
 
-                        {item.message && (
-                          <p className={`text-xs font-mono px-3 py-2 rounded-lg border ${
-                            isPass
-                              ? 'bg-green-50/50 border-green-100 text-green-800'
-                              : isReview
-                              ? 'bg-amber-50/50 border-amber-100 text-amber-800'
-                              : 'bg-red-50/50 border-red-100 text-red-800'
+                        <div className="shrink-0 text-right">
+                          <div className={`text-lg font-black ${
+                            currentScore > 0 ? 'text-green-600' : 'text-red-500'
                           }`}>
-                            {item.message}
-                          </p>
-                        )}
+                            +{currentScore}
+                          </div>
+                          <div className="text-xs text-slate-400">pts</div>
+                        </div>
                       </div>
 
-                      <div className="shrink-0 text-right">
-                        <div className={`text-lg font-black ${
-                          isPass ? 'text-green-600' : isReview ? 'text-amber-500' : 'text-red-500'
-                        }`}>
-                          {isPass ? `+${item.marks || 1}` : '0'}
+                      {/* Instructor Grading Override Interface */}
+                      <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-end bg-slate-50/70 p-3 rounded-xl">
+                        <div className="w-full sm:w-36">
+                          <label className="block text-3xs font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                            Marks (0 - {item.marks || 0})
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={item.marks || 0}
+                            value={grading.marks}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setGradingValues(prev => ({
+                                ...prev,
+                                [item._id]: { ...prev[item._id], marks: val }
+                              }));
+                            }}
+                            className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-700 outline-none focus:border-blue-500 transition"
+                          />
                         </div>
-                        <div className="text-xs text-slate-400">pts</div>
+
+                        <div className="flex-1 w-full">
+                          <label className="block text-3xs font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                            Instructor Comments / Notes
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Add helpful grading feedback..."
+                            value={grading.feedback}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setGradingValues(prev => ({
+                                ...prev,
+                                [item._id]: { ...prev[item._id], feedback: val }
+                              }));
+                            }}
+                            className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-500 transition"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const marksNum = Number(grading.marks);
+                            if (isNaN(marksNum) || grading.marks.trim() === '') {
+                              toast('Please enter a valid number for marks', 'error');
+                              return;
+                            }
+                            if (marksNum < 0 || marksNum > (item.marks || 0)) {
+                              toast(`Marks must be between 0 and ${item.marks || 0}`, 'error');
+                              return;
+                            }
+                            try {
+                              await updateResultMarks(item._id, marksNum, grading.feedback);
+                              toast('Mark updated successfully', 'success');
+                              loadData(); // Reload to refresh scores
+                            } catch (err: any) {
+                              toast('Failed to save: ' + err.message, 'error');
+                            }
+                          }}
+                          className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center whitespace-nowrap"
+                        >
+                          Save Mark
+                        </button>
                       </div>
                     </div>
                   )
                 })}
               </div>
             )}
+
 
             {results.length === 0 && submission.status === 'completed' && (
               <div className="rounded-2xl border bg-white p-12 text-center text-slate-500">

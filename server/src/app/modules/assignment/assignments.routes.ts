@@ -18,6 +18,7 @@ router.get("/:id/enriched", AssignmentController.getEnriched);
 
 router.patch("/:id/activate", AssignmentController.activate);
 router.patch("/:id/archive", AssignmentController.archive);
+router.post("/:id/re-enrich", AssignmentController.reEnrich);
 router.patch("/:id", AssignmentController.update);
 router.delete("/:id", AssignmentController.delete);
 

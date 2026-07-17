@@ -127,6 +127,21 @@ const getEnriched = catchAsync(async (req: Request, res: Response) => {
     },
   });
 });
+// POST /api/assignments/:id/re-enrich
+const reEnrich = catchAsync(async (req: Request, res: Response) => {
+  const assignment = await AssignmentService.reEnrich(req.params.id as string);
+
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    success: true,
+    message: "Re-enrichment complete. Requirements updated with AI rules.",
+    data: {
+      assignmentId: assignment._id,
+      enrichedRequirements: assignment.enrichedRequirements,
+    },
+  });
+});
+
 // DELETE /api/assignments/:id
 const deleteAssignment = catchAsync(async (req: Request, res: Response) => {
   await AssignmentService.delete(req.params.id as string);
@@ -148,5 +163,6 @@ export const AssignmentController = {
   activate: activate,
   archive: archive,
   getEnriched: getEnriched,
+  reEnrich: reEnrich,
   delete: deleteAssignment,
 };

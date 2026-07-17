@@ -1,4 +1,5 @@
 import { Assignment } from "./assignment.model";
+import { enrichAssignmentRequirements } from "../../checker/ai/intentParser";
 
 // ─── DTOs ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,9 @@ export function validateRequirements(reqs: Record<string, any>): void {
     throw new Error("requirements must be a valid JSON object");
   }
 
+  let mainTotal = 0;
+  let challengeTotal = 0;
+
   for (const [section, requirements] of Object.entries(reqs)) {
     if (typeof requirements !== "object" || Array.isArray(requirements)) {
       throw new Error(`Section "${section}" must be an object`);
@@ -68,10 +72,24 @@ export function validateRequirements(reqs: Record<string, any>): void {
       }
       if (r.message === undefined || r.message === null || typeof r.message !== "string") {
         throw new Error(
-          `${section}.${reqKey} — "message" is required and must be a string`,
+          `${section}.${reqKey} — "message" is required and must be a string (can be empty)`,
         );
       }
+
+      const weight = Number(r.number || 0);
+      if (section.toLowerCase().includes('challenge') || reqKey.toLowerCase().includes('challenge')) {
+        challengeTotal += weight;
+      } else {
+        mainTotal += weight;
+      }
     }
+  }
+
+  if (mainTotal !== 50) {
+    throw new Error(`Main requirements total must be exactly 50 marks (current: ${mainTotal})`);
+  }
+  if (challengeTotal !== 10) {
+    throw new Error(`Challenge requirements total must be exactly 10 marks (current: ${challengeTotal})`);
   }
 }
 
@@ -79,7 +97,28 @@ export function validateRequirements(reqs: Record<string, any>): void {
 
 // Create or update a new assignment (upsert)
 const createAssignment = async (data: CreateAssignmentDTO) => {
+  // Handle new template format: { assignmentMeta, figmaUrl, requirements }
+  // In case the client sends the raw template JSON instead of the flat format
+  const rawData = data as any;
+  if (rawData.assignmentMeta && rawData.requirements && !data.originalRequirements) {
+    const meta = rawData.assignmentMeta;
+    let assignmentNo = meta.assignmentNo || meta.number;
+    if (!assignmentNo && meta.title) {
+      const match = meta.title.match(/Assignment\s+(\d+)/i);
+      if (match) assignmentNo = parseInt(match[1], 10);
+    }
+    data = {
+      ...data,
+      assignmentNo: assignmentNo || data.assignmentNo,
+      batch: meta.batch || data.batch,
+      title: meta.title || data.title,
+      figmaUrl: rawData.figmaUrl || data.figmaUrl,
+      originalRequirements: rawData.requirements,
+    };
+  }
+
   validateRequirements(data.originalRequirements);
+
 
   // Check if original requirements are pre-enriched
   const firstSection = Object.values(data.originalRequirements)[0];
@@ -223,6 +262,30 @@ const deleteAssignment = async (id: string) => {
   return Assignment.findByIdAndDelete(id);
 };
 
+// Force re-run of AI enrichment, clearing the previous enrichedRequirements
+const reEnrich = async (id: string) => {
+  const assignment = await Assignment.findById(id);
+  if (!assignment) throw new Error("Assignment not found");
+
+  // Clear old enriched requirements so the checker doesn't use stale rules
+  await Assignment.findByIdAndUpdate(id, { $unset: { enrichedRequirements: 1 } });
+
+  const source = assignment.originalRequirements;
+  if (!source || Object.keys(source).length === 0) {
+    throw new Error("Assignment has no originalRequirements to enrich");
+  }
+
+  const enriched = await enrichAssignmentRequirements(source);
+
+  const updated = await Assignment.findByIdAndUpdate(
+    id,
+    { enrichedRequirements: enriched, status: "active" },
+    { new: true }
+  );
+  if (!updated) throw new Error("Failed to save enriched requirements");
+  return updated;
+};
+
 export const AssignmentService = {
   create: createAssignment,
   getAll: getAllAssignments,
@@ -233,5 +296,6 @@ export const AssignmentService = {
   archive: archive,
   saveEnriched: saveEnriched,
   getEnrichedRequirements: getEnrichedRequirements,
+  reEnrich: reEnrich,
   delete: deleteAssignment,
 };

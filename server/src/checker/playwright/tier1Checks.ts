@@ -51,21 +51,38 @@ export async function runTier1Check(
   page: Page,
   requirement: any
 ): Promise<Tier1CheckResult> {
-  const { selectors = [], checkType, rules = [] } = requirement;
+  const { selectors = [], checkType = "ui-element", rules = [] } = requirement;
 
-  // Build the full selector list: primary selectors + rule selectorHints
-  const allSelectors: string[] = [...selectors];
+  // Build the full selector list: primary selectors + rule selectorHints (prepended for higher priority)
+  const allSelectors: string[] = [];
   for (const rule of rules) {
     if (rule.selectorHint) {
-      const hints = rule.selectorHint.split(",").map((s: string) => s.trim());
+      const hints = rule.selectorHint.split(",").map((s: string) => s.trim()).filter(Boolean);
       for (const h of hints) {
         if (!allSelectors.includes(h)) allSelectors.push(h);
       }
     }
   }
+  // Append primary selectors that weren't already added from selectorHints
+  for (const s of selectors) {
+    if (!allSelectors.includes(s)) allSelectors.push(s);
+  }
+
+  // Resolve effective checkType: treat static-ui and functional-ui as ui-element
+  // but honour overrides from rules[] (position rule → ui-position, count rule → ui-count, text rule → text)
+  let effectiveCheckType = checkType;
+  if (effectiveCheckType === "static-ui" || effectiveCheckType === "functional-ui" || effectiveCheckType === "functional-crud") {
+    const hasCountRule = rules.some((r: any) => r.kind === "count");
+    const hasPosRule = rules.some((r: any) => r.kind === "position");
+    const hasTextRule = rules.some((r: any) => r.kind === "text");
+    if (hasCountRule) effectiveCheckType = "ui-count";
+    else if (hasPosRule) effectiveCheckType = "ui-position";
+    else if (hasTextRule) effectiveCheckType = "text-check";
+    else effectiveCheckType = "ui-element";
+  }
 
   // ─── ui-count ───────────────────────────────────────────────────────────────
-  if (checkType === "ui-count") {
+  if (effectiveCheckType === "ui-count") {
     let expected = 1;
     const countRule = rules?.find((r: any) => r.kind === "count" || typeof r.expected === "number");
     if (countRule && typeof countRule.expected === "number") {
@@ -115,6 +132,27 @@ export async function runTier1Check(
   // ─── Find element for all other check types ──────────────────────────────────
   const { found, selector: activeSelector, visibleOnly } = await findElement(page, allSelectors);
 
+  // ─── Explicit exists rule (kind=exists) ─────────────────────────────────────
+  const existsRule = rules.find((r: any) => r.kind === "exists");
+  if (existsRule) {
+    if (!found) {
+      return {
+        correct: false,
+        message: `Required element not found in DOM. Checked: ${allSelectors.slice(0, 5).join(", ")}`,
+        evidence: { details: "All selectors tried — none found even in DOM." },
+      };
+    }
+    // If element found and no other rules override, pass immediately
+    const hasOtherRules = rules.some((r: any) => r.kind !== "exists");
+    if (!hasOtherRules) {
+      return {
+        correct: true,
+        message: `Element found and ${visibleOnly ? "visible" : "present in DOM"} — selector: "${activeSelector}"`,
+        evidence: { selectorUsed: activeSelector },
+      };
+    }
+  }
+
   if (!found) {
     return {
       correct: false,
@@ -127,7 +165,7 @@ export async function runTier1Check(
 
   // ─── Text check — scans ALL matching elements, passes if ANY contains expected ─
   const textRule = rules.find((r: any) => r.kind === "text");
-  if (textRule || (rules?.[0] && rules[0].kind === "text")) {
+  if (textRule || effectiveCheckType === "text-check") {
     const rule = textRule || rules[0];
     const expectedNorm = normalizeText(String(rule.expected || ""));
 
@@ -176,7 +214,7 @@ export async function runTier1Check(
 
   // ─── Position check ─────────────────────────────────────────────────────────
   const posRule = rules.find((r: any) => r.kind === "position");
-  if (checkType === "ui-position" || posRule) {
+  if (effectiveCheckType === "ui-position" || posRule) {
     const box = await locator.boundingBox();
     if (!box) {
       return {
