@@ -1,72 +1,38 @@
-interface DashboardStat {
-  name: string;
-  value: number;
-}
+import React from 'react';
 
-interface StatsProps {
-  stats: DashboardStat[];
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stats = ({ filteredData, passedCount, failedCount, passRate, batches, mockRequirements }: any) => {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-slate-600 text-sm font-medium">Total Requirements</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{filteredData.length}</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Showing {filteredData.length} of {mockRequirements.length}
+              </p>
+            </div>
 
-const cardStyles: Record<
-  string,
-  {
-    border: string;
-    text: string;
-    value: string;
-    subtext: string;
-  }
-> = {
-  "Total Assignments": {
-    border: "border-slate-200",
-    text: "text-slate-600",
-    value: "text-slate-900",
-    subtext: "Total assignments",
-  },
-  "Total Submissions": {
-    border: "border-purple-200",
-    text: "text-purple-700",
-    value: "text-purple-600",
-    subtext: "Student submissions",
-  },
-  Active: {
-    border: "border-emerald-200",
-    text: "text-emerald-700",
-    value: "text-emerald-600",
-    subtext: "Currently active",
-  },
-  Draft: {
-    border: "border-amber-200",
-    text: "text-amber-700",
-    value: "text-amber-600",
-    subtext: "Draft assignments",
-  },
+            <div className="bg-white rounded-lg border border-emerald-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-emerald-700 text-sm font-medium">Passed</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">{passedCount}</p>
+              <p className="text-xs text-emerald-600 mt-1">{passRate}% pass rate</p>
+            </div>
+
+            <div className="bg-white rounded-lg border border-red-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-red-700 text-sm font-medium">Failed</p>
+              <p className="text-3xl font-bold text-red-600 mt-2">{failedCount}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {filteredData.length > 0 ? Math.round(((failedCount / filteredData.length) * 100)) : 0}% fail rate
+              </p>
+            </div>
+
+            <div className="bg-white rounded-lg border border-blue-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-blue-700 text-sm font-medium">Batches</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{batches.length}</p>
+              <p className="text-xs text-blue-600 mt-1">Active batches</p>
+            </div>
+          </div>
+    );
 };
 
-export default function Stats({ stats }: StatsProps) {
-  return (
-    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => {
-        const style = cardStyles[stat.name];
-
-        return (
-          <div
-            key={stat.name}
-            className={`rounded-lg border ${style.border} bg-white p-6 shadow-sm transition-shadow hover:shadow-md`}
-          >
-            <p className={`text-sm font-medium ${style.text}`}>
-              {stat.name}
-            </p>
-
-            <p className={`mt-2 text-3xl font-bold ${style.value}`}>
-              {stat.value}
-            </p>
-
-            <p className={`mt-1 text-xs ${style.text}`}>
-              {style.subtext}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+export default stats;

@@ -12,14 +12,21 @@ export interface GitHubCheckResult {
   commitSpreadFlag: boolean;
   allCommitsSameDay: boolean;
   error?: string;
+  commitQuality?: string;
 }
 
 // Parse GitHub URL → owner + repo
+// Handles: /tree/branch/..., /blob/..., trailing .git, etc.
 export function parseGitHubUrl(
   url: string,
 ): { owner: string; repo: string } | null {
   try {
-    const cleaned = url.replace(/\.git$/, "").trim();
+    const cleaned = url
+      .replace(/\.git$/, "")          // strip .git suffix
+      .replace(/\/tree\/.*$/, "")     // strip /tree/branch/path
+      .replace(/\/blob\/.*$/, "")     // strip /blob/branch/path
+      .replace(/\/commits?\/.*$/, "") // strip /commit/sha
+      .trim();
     const match = cleaned.match(/github\.com\/([^/]+)\/([^/]+)/);
     if (!match) return null;
     return { owner: match[1], repo: match[2] };
@@ -27,6 +34,14 @@ export function parseGitHubUrl(
     return null;
   }
 }
+
+interface CacheEntry {
+  timestamp: number;
+  result: GitHubCheckResult;
+}
+
+const githubCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 export async function checkGitHubRepo(
   githubUrl: string,
@@ -48,26 +63,33 @@ export async function checkGitHubRepo(
   }
 
   const { owner, repo } = parsed;
+  const cacheKey = `${owner}/${repo}`.toLowerCase();
+  
+  const cached = githubCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log(`[GITHUB CACHE HIT] Returning cached details for: ${cacheKey}`);
+    return cached.result;
+  }
 
   try {
-    // 1. Fetch repo metadata
-    const { data: repoData } = await octokit.repos.get({ owner, repo });
+    // Fetch repository data, commits, and readme in parallel
+    const [repoResult, commitsResult, readmeResult] = await Promise.allSettled([
+      octokit.repos.get({ owner, repo }),
+      octokit.repos.listCommits({ owner, repo, per_page: 100 }),
+      octokit.repos.getReadme({ owner, repo }),
+    ]);
 
-    // 2. Fetch commits (max 100)
-    const { data: commits } = await octokit.repos.listCommits({
-      owner,
-      repo,
-      per_page: 100,
-    });
-
-    // 3. Check README
-    let hasReadme = false;
-    try {
-      await octokit.repos.getReadme({ owner, repo });
-      hasReadme = true;
-    } catch {
-      hasReadme = false;
+    if (repoResult.status === "rejected") {
+      throw repoResult.reason;
     }
+    const repoData = repoResult.value.data;
+
+    if (commitsResult.status === "rejected") {
+      throw commitsResult.reason;
+    }
+    const commits = commitsResult.value.data;
+
+    const hasReadme = readmeResult.status === "fulfilled";
 
     // 4. Commit spread check
     // Flag if all commits happened on the same calendar day
@@ -81,8 +103,13 @@ export async function checkGitHubRepo(
     const commitSpreadFlag = commits.length < 3 || allCommitsSameDay;
 
     const lastCommit = commits[0];
+    const commitQuality = commitSpreadFlag
+      ? allCommitsSameDay
+        ? `⚠️ All ${commits.length} commits on the same day — possible bulk upload`
+        : `⚠️ Only ${commits.length} commits — expected ≥3 across different days`
+      : `✅ ${commits.length} commits across ${uniqueDays.size} day(s)`;
 
-    return {
+    const result: GitHubCheckResult = {
       repoExists: true,
       isPrivate: repoData.private,
       totalCommits: commits.length,
@@ -91,7 +118,11 @@ export async function checkGitHubRepo(
       hasReadme,
       commitSpreadFlag,
       allCommitsSameDay,
+      commitQuality,
     };
+
+    githubCache.set(cacheKey, { timestamp: Date.now(), result });
+    return result;
   } catch (err: any) {
     // Handle private repo
     if (err.status === 404 || err.status === 403) {

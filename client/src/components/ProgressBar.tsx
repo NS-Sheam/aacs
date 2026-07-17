@@ -24,20 +24,21 @@ export function ProgressBar({
 
     const pollStatus = async () => {
       try {
-        const data = await apiFetch<SubmissionProgress>(
+        const response = await apiFetch<{ success: boolean; data: SubmissionProgress }>(
           `/api/v1/submissions/${submissionId}/status`
         )
+        const progressData = response.data
 
-        setProgress(data)
+        setProgress(progressData)
         setError(null)
 
         if (
-          data.status === 'completed' ||
-          data.status === 'error'
+          progressData.status === 'completed' ||
+          progressData.status === 'error'
         ) {
           clearInterval(interval)
 
-          if (data.status === 'completed') {
+          if (progressData.status === 'completed') {
             onComplete?.()
           }
         }
@@ -95,7 +96,7 @@ export function ProgressBar({
   }
 
   const isCompleted = progress.status === 'completed'
-  const isRunning = progress.status === 'active'
+  const isRunning = progress.status === 'running'
 
   return (
     <div className="space-y-6">
@@ -161,7 +162,7 @@ export function ProgressBar({
           </p>
         )}
 
-        {progress.status === 'active' && (
+        {progress.status === 'running' && (
           <p className="text-blue-700">
             Running automated checks...
           </p>

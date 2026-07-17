@@ -1,20 +1,28 @@
+import mongoose from "mongoose";
 import { checkQueue } from "../../worker/checkQueue";
 import { ISubmission, Submission } from "./submission.model";
-import { Result } from "../result/result.model";
 import { ReviewQueue } from "../reviewQueue/reviewQueue.model";
+import { Result } from "../result/result.model";
 
 export interface CreateSubmissionDTO {
   assignmentId: string;
   studentName?: string;
-  studentEmail?: string;
   liveUrl: string;
   githubUrl: string;
+}
+
+export interface CreateSubmissionDTO {
+  assignmentId: string;
+  studentName?: string;
+  liveUrl: string;
+  githubUrl: string;
+  duplicateResolution?: 'overwrite' | 'keep_previous' | 'keep_both';
 }
 
 // Create submission record and enqueue BullMQ job
 const createSubmission = async (
   data: CreateSubmissionDTO,
-): Promise<ISubmission> => {
+): Promise<ISubmission & { isDuplicate?: boolean; existingSubmissionId?: string }> => {
   // Validate URLs
   if (!data.liveUrl.startsWith("http")) {
     throw new Error("liveUrl must be a valid URL starting with http");
@@ -23,8 +31,47 @@ const createSubmission = async (
     throw new Error("githubUrl must be a valid GitHub URL");
   }
 
+  // Check for duplicate submission (same studentName and assignmentId)
+  if (data.studentName) {
+    const existing = await Submission.findOne({
+      assignmentId: data.assignmentId,
+      studentName: data.studentName,
+    }).sort({ createdAt: -1 });
+
+    if (existing) {
+      if (!data.duplicateResolution) {
+        // Return duplicate status so controller can send 409
+        const duplicateErrorObj = new Error("Duplicate submission detected") as any;
+        duplicateErrorObj.statusCode = 409;
+        duplicateErrorObj.existingSubmission = existing;
+        throw duplicateErrorObj;
+      }
+
+      if (data.duplicateResolution === "keep_previous") {
+        return existing;
+      }
+
+      if (data.duplicateResolution === "overwrite") {
+        // Delete existing submission, results, and reviews
+        await Submission.findByIdAndDelete(existing._id);
+        await Result.deleteMany({ submissionId: existing._id });
+        await ReviewQueue.deleteMany({ submissionId: existing._id });
+      }
+      // If 'keep_both', we just fall through and create a new one!
+    }
+  }
+
+  const nameStr = data.studentName || "";
+  const emailMatch = nameStr.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+  const studentEmail = emailMatch ? emailMatch[1] : "";
+  const studentNameClean = emailMatch ? nameStr.replace(emailMatch[0], "").replace(/[()]/g, "").trim() : nameStr;
+
   const submission = await Submission.create({
-    ...data,
+    assignmentId: data.assignmentId,
+    studentName: studentNameClean || nameStr,
+    studentEmail: studentEmail || undefined,
+    liveUrl: data.liveUrl,
+    githubUrl: data.githubUrl,
     status: "queued",
     progress: { completedChecks: 0, totalChecks: 0 },
   });
@@ -38,42 +85,6 @@ const createSubmission = async (
   });
 
   return submission;
-};
-
-// Bulk create — portal submits many students at once.
-// Per-item try/catch is intentional: one bad row must not abort the batch.
-const createBulkSubmissions = async (
-  submissions: CreateSubmissionDTO[],
-): Promise<{
-  success: Array<{ studentName?: string; submissionId: string }>;
-  failed: Array<{ studentName?: string; error: string }>;
-}> => {
-  if (!Array.isArray(submissions) || submissions.length === 0) {
-    throw new Error("submissions must be a non-empty array");
-  }
-  if (submissions.length > 50) {
-    throw new Error("Maximum 50 submissions per bulk request");
-  }
-
-  const success: Array<{ studentName?: string; submissionId: string }> = [];
-  const failed: Array<{ studentName?: string; error: string }> = [];
-
-  for (const sub of submissions) {
-    try {
-      const created = await createSubmission(sub);
-      success.push({
-        studentName: sub.studentName,
-        submissionId: created._id.toString(),
-      });
-    } catch (err) {
-      failed.push({
-        studentName: sub.studentName,
-        error: err instanceof Error ? err.message : "Unknown error",
-      });
-    }
-  }
-
-  return { success, failed };
 };
 
 // Get submission status + progress
@@ -106,130 +117,69 @@ const getSubmissionByAssignment = async (
     .sort({ createdAt: -1 });
 };
 
-// Get submissions for an assignment, paginated (newest first)
-const getSubmissionByAssignmentPaginated = async (
-  assignmentId: string,
-  page = 1,
-  limit = 20,
-): Promise<{
-  submissions: ISubmission[];
-  total: number;
-  page: number;
-  totalPages: number;
-}> => {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.max(1, limit);
-  const skip = (safePage - 1) * safeLimit;
-
-  const [submissions, total] = await Promise.all([
-    Submission.find({ assignmentId })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(safeLimit)
-      .select("-__v"),
-    Submission.countDocuments({ assignmentId }),
-  ]);
-
-  return {
-    submissions,
-    total,
-    page: safePage,
-    totalPages: Math.ceil(total / safeLimit),
-  };
-};
-
 // Get single submission with full data
 const getSubmissionById = async (id: string): Promise<ISubmission | null> => {
   return Submission.findById(id);
 };
 
-const updateSubmission = async (
-  id: string,
-  data: Partial<CreateSubmissionDTO>,
-): Promise<ISubmission | null> => {
-  const submission = await Submission.findById(id);
-  if (!submission) return null;
-
-  if (data.studentName !== undefined) submission.studentName = data.studentName;
-  if (data.studentEmail !== undefined) submission.studentEmail = data.studentEmail;
-
-  let urlChanged = false;
-  if (data.liveUrl !== undefined && data.liveUrl !== submission.liveUrl) {
-    if (!data.liveUrl.startsWith("http")) {
-      throw new Error("liveUrl must be a valid URL starting with http");
-    }
-    submission.liveUrl = data.liveUrl;
-    urlChanged = true;
-  }
-
-  if (data.githubUrl !== undefined && data.githubUrl !== submission.githubUrl) {
-    if (!data.githubUrl.includes("github.com")) {
-      throw new Error("githubUrl must be a valid GitHub URL");
-    }
-    submission.githubUrl = data.githubUrl;
-    urlChanged = true;
-  }
-
-  if (urlChanged) {
-    submission.status = "queued";
-    submission.progress = { completedChecks: 0, totalChecks: 0 };
-    submission.totalScore = undefined;
-    submission.maxScore = undefined;
-    submission.errorMessage = undefined;
-
-    await Result.deleteMany({ submissionId: id });
-    await ReviewQueue.deleteMany({ submissionId: id });
-
-    await checkQueue.add("run-checks", {
-      submissionId: id,
-      assignmentId: submission.assignmentId.toString(),
-      liveUrl: submission.liveUrl,
-      githubUrl: submission.githubUrl,
-    });
-  }
-
-  await submission.save();
-  return submission;
+// Get all submissions
+const getAllSubmissions = async (): Promise<ISubmission[]> => {
+  return Submission.find({})
+    .populate("assignmentId", "title batch assignmentNo")
+    .select("-__v")
+    .sort({ createdAt: -1 });
 };
 
-const recheckSubmission = async (id: string): Promise<ISubmission | null> => {
-  const submission = await Submission.findById(id);
-  if (!submission) return null;
+// Get aggregated verification stats
+const getStats = async () => {
+  const total = await Submission.countDocuments();
+  const autoChecked = await Submission.countDocuments({ status: "completed" });
+  const failed = await Submission.countDocuments({ status: "error" });
+  const needsReview = await ReviewQueue.countDocuments({ status: "pending" });
 
+  return {
+    total,
+    autoChecked,
+    needsReview,
+    failed,
+  };
+};
+
+// Re-queue existing submission for checking
+const recheckSubmission = async (id: string): Promise<ISubmission> => {
+  const submission = await Submission.findById(id);
+  if (!submission) {
+    throw new Error("Submission not found");
+  }
+
+  // 1. Reset submission status and progress
   submission.status = "queued";
   submission.progress = { completedChecks: 0, totalChecks: 0 };
   submission.totalScore = undefined;
-  submission.maxScore = undefined;
   submission.errorMessage = undefined;
+  await submission.save();
 
+  // 2. Delete old Results and ReviewQueue items for this submission
   await Result.deleteMany({ submissionId: id });
   await ReviewQueue.deleteMany({ submissionId: id });
 
+  // 3. Re-queue checks job in BullMQ
   await checkQueue.add("run-checks", {
-    submissionId: id,
+    submissionId: submission._id.toString(),
     assignmentId: submission.assignmentId.toString(),
     liveUrl: submission.liveUrl,
     githubUrl: submission.githubUrl,
   });
 
-  await submission.save();
   return submission;
-};
-
-const getAllSubmissions = async (): Promise<ISubmission[]> => {
-  return Submission.find()
-    .populate("assignmentId", "title assignmentNo batch")
-    .sort({ createdAt: -1 });
 };
 
 export const SubmissionServices = {
   create: createSubmission,
-  createBulk: createBulkSubmissions,
   getStatus: getSubmissionStatus,
   getByAssignment: getSubmissionByAssignment,
-  getByAssignmentPaginated: getSubmissionByAssignmentPaginated,
   getById: getSubmissionById,
-  update: updateSubmission,
-  recheck: recheckSubmission,
   getAll: getAllSubmissions,
+  getStats,
+  recheck: recheckSubmission,
 };
