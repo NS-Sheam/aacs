@@ -9,6 +9,7 @@ interface Config {
   redisPort: number;
   githubToken: string;
   db_uri: string;
+  geminiApiKey: string;
 }
 
 const config: Config = {
@@ -18,6 +19,8 @@ const config: Config = {
   redisHost: process.env.REDIS_HOST || "127.0.0.1",
   redisPort: Number(process.env.REDIS_PORT) || 6379,
   githubToken: process.env.GITHUB_TOKEN!,
+  // geminiApiKey: process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY || "",
+  geminiApiKey:  "",
 };
 
 export default config;

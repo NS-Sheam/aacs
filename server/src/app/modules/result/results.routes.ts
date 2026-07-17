@@ -1,15 +1,24 @@
-import { Router } from "express";
-import { ResultController } from "./result.controller";
-
+import { Request, Response, Router } from "express";
+import { Result } from "./result.model";
 const router = Router();
 
-// Support both URL patterns and HTTP methods for maximum compatibility
-router.post("/export/:submissionId", ResultController.exportJSON);
-router.get("/export/:submissionId", ResultController.exportJSON);
-router.post("/:submissionId/export", ResultController.exportJSON);
-router.get("/:submissionId/export", ResultController.exportJSON);
+router.get("/submission/:submissionId", async (req: Request, res: Response) => {
+  try {
+    const results = await Result.find({ submissionId: req.params.submissionId });
+    res.json({
+      success: true,
+      data: results,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
-router.get("/:submissionId/summary", ResultController.getSummary);
-router.get("/:submissionId", ResultController.getBySubmission);
+router.post("/export/:submissionId", async (req: Request, res: Response) => {
+  res.json({ message: `Export for ${req.params.submissionId} — coming Day 4` });
+});
 
 export const resultsRoutes = router;

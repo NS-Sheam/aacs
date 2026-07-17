@@ -28,6 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/screenshots", express.static("logs/screenshots"));
 app.use("/api/v1", router);
 
 app.get("/", (req, res) => {

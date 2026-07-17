@@ -1,159 +1,368 @@
-import Link from 'next/link'
-import { Eye, ClipboardList, Calendar, User } from 'lucide-react'
-import { getAllSubmissions } from '@/app/lib/api'
-import StatusBadge from '@/components/StatusBadge'
+'use client'
 
-interface SubmissionItem {
-  _id: string
-  studentName?: string
-  studentEmail?: string
-  liveUrl: string
-  githubUrl: string
-  status: string
-  totalScore?: number
-  maxScore?: number
-  createdAt: string
-  assignmentId?: {
-    _id: string
-    title: string
-    assignmentNo: number
-    batch: number
-  }
-}
+import { useEffect, useState } from 'react'
+import { PlayCircle, Globe, GitFork, User, ArrowRight, Loader2, CheckCircle2, XCircle, ChevronLeft, RefreshCw, AlertTriangle, Layers } from 'lucide-react'
+import { fetchAssignmentsList, submitStudentSubmission, getSubmissionResults, CreateSubmissionDTO } from '../lib/api'
+import { Assignment, Requirement } from '@/types'
+import ProgressBar from '@/components/ProgressBar'
 
-export default async function SubmissionsPage() {
-  let submissions: SubmissionItem[] = []
-  try {
-    const res = await getAllSubmissions()
-    submissions = res?.data || []
-  } catch (err) {
-    console.error('Error loading submissions:', err)
+export default function SubmissionsPage() {
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState('')
+  const [studentName, setStudentName] = useState('')
+  const [liveUrl, setLiveUrl] = useState('')
+  const [githubUrl, setGithubUrl] = useState('')
+
+  const [submissionId, setSubmissionId] = useState<string | null>(null)
+  const [step, setStep] = useState<'form' | 'checking' | 'results'>('form')
+  const [results, setResults] = useState<any[]>([])
+  const [submissionMeta, setSubmissionMeta] = useState<any>(null)
+
+  const [loadingAssignments, setLoadingAssignments] = useState(true)
+  const [loadingResults, setLoadingResults] = useState(false)
+  const [formErrors, setFormErrors] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
+
+  // Load assignments list for dropdown
+  useEffect(() => {
+    fetchAssignmentsList()
+      .then((data) => {
+        setAssignments(data)
+        if (data.length > 0) {
+          setSelectedAssignmentId(data[0]._id)
+        }
+        setLoadingAssignments(false)
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to fetch assignments')
+        setLoadingAssignments(false)
+      })
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormErrors([])
+    setError(null)
+
+    const errs: string[] = []
+    if (!selectedAssignmentId) errs.push('Please select an assignment')
+    if (!liveUrl.trim().startsWith('http')) errs.push('Live Link must start with http:// or https://')
+    if (!githubUrl.trim().includes('github.com')) errs.push('GitHub Link must be a valid github.com repository URL')
+
+    if (errs.length > 0) {
+      setFormErrors(errs)
+      return
+    }
+
+    try {
+      const payload: CreateSubmissionDTO = {
+        assignmentId: selectedAssignmentId,
+        studentName: studentName.trim() || 'Anonymous Student',
+        liveUrl: liveUrl.trim(),
+        githubUrl: githubUrl.trim(),
+      }
+      const response = await submitStudentSubmission(payload)
+      setSubmissionId(response.submissionId)
+      setStep('checking')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Submission failed')
+    }
   }
+
+  // Load detailed results once checks are complete
+  const handleCheckingComplete = async () => {
+    if (!submissionId) return
+    setLoadingResults(true)
+    try {
+      // 1. Fetch results list
+      const data = await getSubmissionResults(submissionId)
+      setResults(data)
+
+      // 2. Fetch submission metadata (e.g. score)
+      const subResponse = await fetch(`/api/v1/submissions/${submissionId}`)
+      if (subResponse.ok) {
+        const subData = await subResponse.json()
+        setSubmissionMeta(subData.data)
+      }
+      setStep('results')
+      setLoadingResults(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch results')
+      setLoadingResults(false)
+    }
+  }
+
+  const resetForm = () => {
+    setStudentName('')
+    setLiveUrl('')
+    setGithubUrl('')
+    setSubmissionId(null)
+    setResults([])
+    setSubmissionMeta(null)
+    setStep('form')
+    setFormErrors([])
+    setError(null)
+  }
+
+  // Group requirements by section
+  const resultsBySection = results.reduce((acc: Record<string, any[]>, item: any) => {
+    const sec = item.section || 'General'
+    if (!acc[sec]) acc[sec] = []
+    acc[sec].push(item)
+    return acc;
+  }, {})
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 md:p-10">
-      <div className="max-w-5xl mx-auto space-y-8">
-        
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Submissions Log</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            A comprehensive history of all student assignment evaluations.
-          </p>
-        </div>
-
-        {/* List of submissions */}
-        <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-          <div className="grid grid-cols-[2fr_2fr_100px_100px_120px_100px] bg-slate-50 px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
-            <span>Student</span>
-            <span>Assignment</span>
-            <span>Score</span>
-            <span>Status</span>
-            <span>Date</span>
-            <span className="text-right">Action</span>
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <main className="flex-1 pb-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-8">
+          
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+              <PlayCircle className="h-8 w-8 text-blue-600 animate-pulse" /> Submit & Check
+            </h1>
+            <p className="text-slate-600 mt-2">Test your code repositories and get automated check scores instantly</p>
           </div>
 
-          {submissions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <ClipboardList className="w-12 h-12 text-slate-300 mb-3" />
-              <h3 className="text-sm font-semibold text-slate-800">No submissions found</h3>
-              <p className="text-xs text-slate-400 mt-1">No evaluations have been processed yet.</p>
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+              <div>
+                <p className="font-semibold text-red-900">System Error</p>
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
             </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {submissions.map((sub) => {
-                const percentage =
-                  sub.totalScore != null && sub.maxScore
-                    ? (sub.totalScore / sub.maxScore) * 100
-                    : null
-                const formattedDate = new Date(sub.createdAt).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })
+          )}
 
-                return (
-                  <div
-                    key={sub._id}
-                    className="grid grid-cols-[2fr_2fr_100px_100px_120px_100px] items-center px-6 py-4 hover:bg-slate-50/40 transition-colors"
-                  >
-                    {/* Student */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-semibold text-sm border border-blue-100">
-                        <User size={14} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-800 text-sm truncate">
-                          {sub.studentName || 'Unknown Student'}
-                        </p>
-                        {sub.studentEmail && (
-                          <p className="text-xs text-slate-400 truncate">{sub.studentEmail}</p>
-                        )}
-                      </div>
-                    </div>
+          {/* Form Step */}
+          {step === 'form' && (
+            <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-6">
+              {loadingAssignments ? (
+                <div className="py-12 text-center text-slate-500 space-y-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto" />
+                  <p>Loading assignments...</p>
+                </div>
+              ) : assignments.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 space-y-2">
+                  <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto" />
+                  <p className="font-medium text-slate-700">No Assignments Available</p>
+                  <p className="text-sm">Please register/upload an assignment config first.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Select Assignment */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Select Assignment
+                    </label>
+                    <select
+                      value={selectedAssignmentId}
+                      onChange={(e) => setSelectedAssignmentId(e.target.value)}
+                      className="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      {assignments.map((a) => (
+                        <option key={a._id} value={a._id}>
+                          Batch {a.batch} — {a.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                    {/* Assignment */}
-                    <div className="min-w-0 pr-4">
-                      {sub.assignmentId ? (
-                        <Link href={`/assignments/${sub.assignmentId._id}`} className="hover:text-blue-500 transition-colors">
-                          <p className="font-semibold text-slate-800 text-sm truncate">
-                            A{sub.assignmentId.assignmentNo}: {sub.assignmentId.title}
-                          </p>
-                          <p className="text-[10px] text-slate-400">Batch {sub.assignmentId.batch}</p>
-                        </Link>
-                      ) : (
-                        <p className="text-slate-400 text-xs">—</p>
-                      )}
-                    </div>
-
-                    {/* Score */}
-                    <div>
-                      {percentage !== null ? (
-                        <span
-                          className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            percentage >= 80
-                              ? 'bg-green-50 text-green-700 border border-green-100'
-                              : percentage >= 50
-                              ? 'bg-yellow-50 text-yellow-700 border border-yellow-100'
-                              : 'bg-red-50 text-red-700 border border-red-100'
-                          }`}
-                        >
-                          {sub.totalScore}/{sub.maxScore}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-xs">—</span>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <StatusBadge status={sub.status} size="sm" />
-                    </div>
-
-                    {/* Date */}
-                    <div className="text-xs text-slate-400 flex items-center gap-1">
-                      <Calendar size={12} className="text-slate-300" />
-                      {formattedDate}
-                    </div>
-
-                    {/* Action */}
-                    <div className="flex justify-end">
-                      <Link href={`/submissions/${sub._id}`}>
-                        <button className="inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-                          <Eye size={12} />
-                          Details
-                        </button>
-                      </Link>
+                  {/* Student Name / Email */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Student Email / Name (Optional)
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="e.g. student@example.com"
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                        className="h-11 w-full rounded-lg border border-slate-300 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      />
                     </div>
                   </div>
-                )
-              })}
+
+                  {/* Live Link */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Live Deployment Link <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="https://nasrinrahman19924.github.io/My-first-assignment01"
+                        value={liveUrl}
+                        onChange={(e) => setLiveUrl(e.target.value)}
+                        className="h-11 w-full rounded-lg border border-slate-300 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+                  </div>
+
+                  {/* GitHub Link */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      GitHub Repository Link <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <GitFork className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="https://github.com/nasrinrahman19924/My-first-assignment01"
+                        value={githubUrl}
+                        onChange={(e) => setGithubUrl(e.target.value)}
+                        className="h-11 w-full rounded-lg border border-slate-300 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Validation Summary */}
+                  {formErrors.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <ul className="space-y-1">
+                        {formErrors.map((err, idx) => (
+                          <li key={idx} className="text-sm text-red-700">
+                            • {err}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full flex justify-center items-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition"
+                  >
+                    Run Automated Checker <ArrowRight className="h-5 w-5" />
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* Checking / Polling Step */}
+          {step === 'checking' && submissionId && (
+            <div className="rounded-2xl border bg-white p-8 shadow-sm max-w-xl mx-auto">
+              <h2 className="text-xl font-bold text-slate-900 mb-6 text-center">Checker Running</h2>
+              <ProgressBar
+                submissionId={submissionId}
+                onComplete={handleCheckingComplete}
+              />
+            </div>
+          )}
+
+          {/* Detailed Results Step */}
+          {step === 'results' && (
+            <div className="space-y-6">
+              {/* Summary Card */}
+              <div className="rounded-xl border bg-white p-6 shadow-sm flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-lg text-slate-900">
+                    Results: {submissionMeta?.studentName || 'Student Submission'}
+                  </h2>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
+                    <span>Status: <strong className="text-slate-700 capitalize">{submissionMeta?.status}</strong></span>
+                    <span>•</span>
+                    <span>Github: <a href={submissionMeta?.githubUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Link</a></span>
+                    <span>•</span>
+                    <span>Live URL: <a href={submissionMeta?.liveUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Link</a></span>
+                  </div>
+                </div>
+
+                {submissionMeta && (
+                  <div className="text-right">
+                    <span className="text-sm text-slate-500">Total Score</span>
+                    <div className="text-3xl font-extrabold text-blue-600">
+                      {submissionMeta.totalScore} / {submissionMeta.maxScore}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Requirement Section Checks */}
+              {loadingResults ? (
+                <div className="py-12 text-center text-slate-500 space-y-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto" />
+                  <p>Fetching evaluation logs...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(resultsBySection).map(([sectionName, items]) => (
+                    <div key={sectionName} className="rounded-xl border bg-white shadow-sm overflow-hidden">
+                      <div className="flex items-center gap-2 border-b bg-slate-50 px-6 py-4">
+                        <Layers className="h-4 w-4 text-slate-500" />
+                        <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-700">
+                          {sectionName}
+                        </h3>
+                      </div>
+
+                      <div className="divide-y divide-slate-100">
+                        {items.map((item: any) => {
+                          const isPass = item.status === 'pass' || item.correct === true
+                          const isFail = item.status === 'fail' || item.correct === false
+                          const isReview = item.status === 'needsReview'
+
+                          return (
+                            <div key={item._id} className="p-6 flex items-start gap-4 hover:bg-slate-50/50">
+                              <div className="mt-0.5">
+                                {isPass ? (
+                                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                                ) : isFail ? (
+                                  <XCircle className="h-6 w-6 text-red-500" />
+                                ) : (
+                                  <AlertTriangle className="h-6 w-6 text-amber-500" />
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold text-slate-800">
+                                    {item.reqKey} (Weight: {item.number || 1})
+                                  </span>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${
+                                    isPass ? 'bg-green-50 border-green-200 text-green-700' :
+                                    isFail ? 'bg-red-50 border-red-200 text-red-700' :
+                                    'bg-amber-50 border-amber-200 text-amber-700'
+                                  }`}>
+                                    {item.status || (item.correct ? 'pass' : 'fail')}
+                                  </span>
+                                </div>
+                                <p className="text-slate-600 text-sm mt-1">{item.description}</p>
+                                {item.message && (
+                                  <p className={`text-xs mt-2 font-mono p-2 border rounded-lg ${
+                                    isPass ? 'bg-green-50/30 border-green-100 text-green-800' : 'bg-red-50/30 border-red-100 text-red-800'
+                                  }`}>
+                                    {item.message}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 max-w-md mx-auto">
+                <button
+                  onClick={resetForm}
+                  className="flex-1 inline-flex justify-center items-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition"
+                >
+                  <RefreshCw className="h-4 w-4" /> Submit Another Submission
+                </button>
+              </div>
             </div>
           )}
         </div>
-        
-      </div>
+      </main>
     </div>
   )
 }

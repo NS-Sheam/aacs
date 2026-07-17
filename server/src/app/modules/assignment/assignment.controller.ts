@@ -4,7 +4,6 @@ import { StatusCodes } from "http-status-codes";
 import catchAsync from "../../helpers/catchAsync";
 import sendResponse from "../../helpers/sendResponse";
 import { AssignmentService } from "./assgnment.service";
-import { enrichAssignment } from "./enrichment.service";
 
 // POST /api/assignments
 const createAssignment = catchAsync(async (req: Request, res: Response) => {
@@ -113,36 +112,30 @@ const archive = catchAsync(async (req: Request, res: Response) => {
 
 // GET /api/assignments/:id/enriched
 const getEnriched = catchAsync(async (req: Request, res: Response) => {
-  const result = await enrichAssignment(req.params.id as string);
+  const assignment = await AssignmentService.getEnrichedRequirements(
+    req.params.id as string,
+  );
 
   sendResponse(res, {
     status: StatusCodes.OK,
     success: true,
     message: "Enriched requirements retrieved successfully",
-    data: result,
+    data: {
+      enrichedRequirements: assignment?.enrichedRequirements,
+      confidenceThreshold: assignment?.confidenceThreshold,
+      status: assignment?.status,
+    },
   });
 });
-// GET /api/assignments/:id/enrichment-status
-const getEnrichmentStatus = catchAsync(async (req: Request, res: Response) => {
-  const status = await AssignmentService.getEnrichmentStatus(
-    req.params.id as string,
-  );
-
-  if (!status) {
-    sendResponse(res, {
-      status: StatusCodes.NOT_FOUND,
-      success: false,
-      message: "Assignment not found",
-      data: null,
-    });
-    return;
-  }
+// DELETE /api/assignments/:id
+const deleteAssignment = catchAsync(async (req: Request, res: Response) => {
+  await AssignmentService.delete(req.params.id as string);
 
   sendResponse(res, {
     status: StatusCodes.OK,
     success: true,
-    message: "Enrichment status retrieved successfully",
-    data: status,
+    message: "Assignment deleted successfully",
+    data: null,
   });
 });
 
@@ -155,5 +148,5 @@ export const AssignmentController = {
   activate: activate,
   archive: archive,
   getEnriched: getEnriched,
-  getEnrichmentStatus: getEnrichmentStatus,
+  delete: deleteAssignment,
 };

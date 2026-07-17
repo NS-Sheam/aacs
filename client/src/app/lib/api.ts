@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Assignment, AssignmentJSON, AssignmentUpload, SubmissionAssignment, SubmissionProgress } from "@/types";
+import { Assignment, AssignmentJSON, SubmissionProgress } from "@/types";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL;
@@ -17,20 +16,29 @@ export const apiFetch = async <T>(
   });
 
   if (!response.ok) {
-    throw new Error("API request failed");
+    let errorMessage = `HTTP ${response.status}`;
+    try {
+      const errBody = await response.json();
+      errorMessage = errBody?.message || errBody?.error || errorMessage;
+    } catch {}
+    throw new Error(errorMessage);
   }
 
   return response.json();
 }
 
 
-export const submitAssignment = async (
-  payload: SubmissionAssignment
-): Promise<{success: boolean; message?: string; data: { _id: string }}> => {
-  return apiFetch("/api/v1/submissions", {
+export const createAssignment = async (
+  assignment: AssignmentJSON
+): Promise<{ assignmentId : string }> => {
+  const result = await apiFetch<{
+    success: boolean;
+    data: { assignmentId: string };
+  }>("/api/v1/assignments", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(assignment),
   });
+  return { assignmentId: result.data.assignmentId };
 }
 
 export const getSubmissionProgress = async (
@@ -48,84 +56,196 @@ interface SearchParams {
 }
 
 export const getAssignments = async (params: SearchParams) => {
-  const query = new URLSearchParams();
+  const result = await apiFetch<{
+    success: boolean;
+    data: any[];
+  }>("/api/v1/assignments");
 
-  if (params.batch) query.set("batch", params.batch);
-  if (params.assignment) query.set("assignment", params.assignment);
-  if (params.search) query.set("search", params.search);
+  const allAssignments = result.data || [];
 
-  const res: { data: Assignment[] } = await apiFetch(`/api/v1/assignments?${query.toString()}`);
-  return res.data as Assignment[];
-}
-export const createAssignment=async (assignment: AssignmentUpload): Promise<{ success: boolean; message?: string; data: { assignmentId: string ,assignment: Assignment} }> => {
-  return apiFetch("/api/v1/assignments", {
-    method: "POST",
-    body: JSON.stringify(assignment),
+  // 1. Extract unique batches & assignment numbers
+  const batchesSet = new Set<string>();
+  const assignmentNosSet = new Set<string>();
+  allAssignments.forEach((a) => {
+    if (a.batch !== undefined && a.batch !== null) batchesSet.add(String(a.batch));
+    if (a.assignmentNo !== undefined && a.assignmentNo !== null) assignmentNosSet.add(String(a.assignmentNo));
   });
-} 
 
-export const getSubmissionStatus = async (submissionId: string): Promise<any> => {
-  return apiFetch(`/api/v1/submissions/${submissionId}/status`);
-}
+  const batches = Array.from(batchesSet).sort((a, b) => Number(b) - Number(a));
+  const assignmentNumbers = Array.from(assignmentNosSet).sort((a, b) => Number(a) - Number(b));
 
-export const exportAssignment=async (submissionId: string): Promise<any> => {
-  return apiFetch(`/api/v1/results/export/${submissionId}`,{
-    method: "POST",
-    body: JSON.stringify({ submissionId }),
+  // 2. Filter in memory
+  let filtered = allAssignments;
+  if (params.batch) filtered = filtered.filter((a) => String(a.batch) === String(params.batch));
+  if (params.assignment) filtered = filtered.filter((a) => String(a.assignmentNo) === String(params.assignment));
+
+  // 3. Flatten enrichedRequirements (preferred) or originalRequirements
+  let flattenedRequirements: any[] = [];
+  filtered.forEach((a) => {
+    // Prefer enriched (has automationTier, checkType, etc)
+    const source = (a.enrichedRequirements && Object.keys(a.enrichedRequirements).length > 0)
+      ? a.enrichedRequirements
+      : a.originalRequirements || {};
+
+    Object.entries(source).forEach(([sectionName, sectionReqs]: [string, any]) => {
+      if (!sectionReqs || typeof sectionReqs !== "object") return;
+      Object.entries(sectionReqs).forEach(([reqKey, req]: [string, any]) => {
+        if (reqKey.startsWith("sub_req")) return;
+        flattenedRequirements.push({
+          _id: `${a._id}-${sectionName}-${reqKey}`,
+          assignmentId: a._id,
+          section: sectionName,
+          reqKey,
+          description: req.description || "",
+          number: Number(req.number || req.marks || 1),
+          message: req.message || "",
+          automationTier: req.automationTier ?? 1,
+          checkType: req.checkType || "static-ui",
+          batch: String(a.batch),
+          assignmentNo: String(a.assignmentNo),
+          title: a.title,
+        });
+      });
+    });
   });
+
+  // 4. Search filter
+  if (params.search) {
+    const searchLower = params.search.toLowerCase();
+    flattenedRequirements = flattenedRequirements.filter(
+      (r) =>
+        (r.description || "").toLowerCase().includes(searchLower) ||
+        (r.reqKey || "").toLowerCase().includes(searchLower) ||
+        (r.section || "").toLowerCase().includes(searchLower) ||
+        (r.title || "").toLowerCase().includes(searchLower)
+    );
+  }
+
+  return {
+    assignments: flattenedRequirements as Assignment[],
+    batches,
+    assignmentNumbers,
+  };
 }
 
-export const getAssignmentById=async (assignmentId: string): Promise<any> => {
-  return apiFetch(`/api/v1/assignments/${assignmentId}`);
-}
+export const fetchAssignmentsList = async (): Promise<Assignment[]> => {
+  const response = await apiFetch<{ success: boolean; data: any[] }>("/api/v1/assignments");
+  return response.data || [];
+};
 
-export const getEnrichedAssignmentById=async (assignmentId: string): Promise<any> => {
-  return apiFetch(`/api/v1/assignments/${assignmentId}/enriched`);
-}
-
-export const getReviewQueueItems=async (submissionId?: string): Promise<any> => {
-  const url = submissionId
-    ? `/api/v1/review-queue?submissionId=${submissionId}`
-    : `/api/v1/review-queue`;
-  return apiFetch(url);
-}
-
-export const resolveQueueItem=async (itemId: string, decision: "pass" | "fail", resolvedBy: string): Promise<any> => {
-  return apiFetch(`/api/v1/review-queue/${itemId}`, {
+export const updateAssignment = async (
+  id: string,
+  data: Partial<AssignmentJSON>
+): Promise<any> => {
+  return apiFetch<any>(`/api/v1/assignments/${id}`, {
     method: "PATCH",
-    body: JSON.stringify({ decision, resolvedBy }),
+    body: JSON.stringify(data),
   });
+};
+
+export const deleteAssignment = async (id: string): Promise<any> => {
+  return apiFetch<any>(`/api/v1/assignments/${id}`, {
+    method: "DELETE",
+  });
+};
+export interface CreateSubmissionDTO {
+  assignmentId: string;
+  studentName?: string;
+  liveUrl: string;
+  githubUrl: string;
+  duplicateResolution?: 'overwrite' | 'keep_previous' | 'keep_both';
 }
 
-export const getSubmissionById=async (submissionId: string): Promise<any> => {
-  return apiFetch(`/api/v1/submissions/${submissionId}`);
-}
+export const submitStudentSubmission = async (
+  data: CreateSubmissionDTO
+): Promise<{ submissionId: string; isDuplicate?: boolean; existingSubmission?: any }> => {
+  const url = `${API_URL}/api/v1/submissions`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
 
-export const summaryResults=async (submissionId: string): Promise<any> => {
-  return apiFetch(`/api/v1/results/${submissionId}/summary`);
-}
+  if (response.status === 409) {
+    const errBody = await response.json();
+    return {
+      submissionId: errBody.existingSubmission?._id || "",
+      isDuplicate: true,
+      existingSubmission: errBody.existingSubmission,
+    };
+  }
 
-export const getResultBySubmissionId=async (submissionId: string): Promise<any> => {
-  return apiFetch(`/api/v1/results/${submissionId}`);
-}
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}`;
+    try {
+      const errBody = await response.json();
+      errorMessage = errBody?.message || errBody?.error || errorMessage;
+    } catch {}
+    throw new Error(errorMessage);
+  }
 
-export const getSubmissionsByAssignmentId = async (assignmentId: string,page: number,limit: number): Promise<any> => {
-  return apiFetch(`/api/v1/submissions/assignment/${assignmentId}/paginated?page=${page}&limit=${limit}`);
-}
+  const result = await response.json();
+  return { submissionId: result.data._id };
+};
 
-export const recheckSubmission = async (submissionId: string): Promise<any> => {
-  return apiFetch(`/api/v1/submissions/${submissionId}/recheck`, {
+export const getSubmissionResults = async (
+  submissionId: string
+): Promise<any[]> => {
+  const response = await apiFetch<{ success: boolean; data: any[] }>(
+    `/api/v1/results/submission/${submissionId}`
+  );
+  return response.data || [];
+};
+
+export const fetchDashboardStats = async (): Promise<{
+  total: number;
+  autoChecked: number;
+  needsReview: number;
+  failed: number;
+}> => {
+  const response = await apiFetch<{ success: boolean; data: any }>("/api/v1/submissions/stats");
+  return response.data;
+};
+
+export const fetchSubmissionsList = async (): Promise<any[]> => {
+  const response = await apiFetch<{ success: boolean; data: any[] }>("/api/v1/submissions");
+  return response.data || [];
+};
+
+export const fetchReviewQueue = async (): Promise<any[]> => {
+  const response = await apiFetch<{ success: boolean; data: any[] }>("/api/v1/review-queue");
+  return response.data || [];
+};
+
+export const resolveReviewItem = async (
+  itemId: string,
+  status: "approved" | "rejected",
+  notes?: string
+): Promise<void> => {
+  await apiFetch(`/api/v1/review-queue/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, notes }),
+  });
+};
+
+export const recheckSubmission = async (
+  submissionId: string
+): Promise<{ submissionId: string }> => {
+  const result = await apiFetch<{
+    success: boolean;
+    data: { _id: string };
+  }>(`/api/v1/submissions/${submissionId}/recheck`, {
     method: "POST",
   });
-}
+  return { submissionId: result.data._id };
+};
 
-export const updateSubmission = async (submissionId: string, payload: { studentName?: string; liveUrl?: string; githubUrl?: string }): Promise<any> => {
-  return apiFetch(`/api/v1/submissions/${submissionId}`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
-}
-
-export const getAllSubmissions = async (): Promise<any> => {
-  return apiFetch("/api/v1/submissions");
-}
+export const bulkRecheckSubmissions = async (
+  submissionIds: string[]
+): Promise<{ count: number }> => {
+  const promises = submissionIds.map(id => recheckSubmission(id));
+  await Promise.all(promises);
+  return { count: submissionIds.length };
+};

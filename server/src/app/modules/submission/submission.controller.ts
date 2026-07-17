@@ -7,29 +7,27 @@ import { SubmissionServices } from "./submission.service";
 
 // POST /api/submissions
 const createSubmission = catchAsync(async (req: Request, res: Response) => {
-  const result = await SubmissionServices.create(req.body);
-
-  sendResponse(res, {
-    status: StatusCodes.CREATED,
-    success: true,
-    message: "Submission created successfully",
-    data: result,
-  });
-});
-
-// POST /api/submissions/bulk
-const createBulkSubmissions = catchAsync(
-  async (req: Request, res: Response) => {
-    const result = await SubmissionServices.createBulk(req.body.submissions);
+  try {
+    const result = await SubmissionServices.create(req.body);
 
     sendResponse(res, {
       status: StatusCodes.CREATED,
       success: true,
-      message: `${result.success.length} queued · ${result.failed.length} failed`,
+      message: "Submission created successfully",
       data: result,
     });
-  },
-);
+  } catch (error: any) {
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        message: "Duplicate submission detected",
+        isDuplicate: true,
+        existingSubmission: error.existingSubmission,
+      });
+    }
+    throw error;
+  }
+});
 
 // GET /api/submissions/:id/status
 const getSubmissionStatus = catchAsync(async (req: Request, res: Response) => {
@@ -59,33 +57,6 @@ const getSubmissionByAssignment = catchAsync(
   },
 );
 
-// GET /api/submissions/assignment/:assignmentId/paginated
-const getSubmissionByAssignmentPaginated = catchAsync(
-  async (req: Request, res: Response) => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-
-    const result = await SubmissionServices.getByAssignmentPaginated(
-      req.params.assignmentId as string,
-      page,
-      limit,
-    );
-
-    sendResponse(res, {
-      status: StatusCodes.OK,
-      success: true,
-      message: "Assignment submissions retrieved successfully",
-      meta: {
-        page: result.page,
-        limit,
-        total: result.total,
-        totalPages: result.totalPages,
-      },
-      data: result.submissions,
-    });
-  },
-);
-
 // GET /api/submissions/:id
 const getSubmissionById = catchAsync(async (req: Request, res: Response) => {
   const result = await SubmissionServices.getById(req.params.id as string);
@@ -98,17 +69,26 @@ const getSubmissionById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// PATCH /api/submissions/:id
-const updateSubmission = catchAsync(async (req: Request, res: Response) => {
-  const result = await SubmissionServices.update(
-    req.params.id as string,
-    req.body,
-  );
+// GET /api/submissions
+const getAllSubmissions = catchAsync(async (req: Request, res: Response) => {
+  const result = await SubmissionServices.getAll();
 
   sendResponse(res, {
     status: StatusCodes.OK,
     success: true,
-    message: "Submission updated successfully",
+    message: "Submissions retrieved successfully",
+    data: result,
+  });
+});
+
+// GET /api/submissions/stats
+const getStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await SubmissionServices.getStats();
+
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    success: true,
+    message: "Stats retrieved successfully",
     data: result,
   });
 });
@@ -120,31 +100,17 @@ const recheckSubmission = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     status: StatusCodes.OK,
     success: true,
-    message: "Recheck started successfully",
-    data: result,
-  });
-});
-
-// GET /api/submissions
-const getAllSubmissions = catchAsync(async (req: Request, res: Response) => {
-  const result = await SubmissionServices.getAll();
-
-  sendResponse(res, {
-    status: StatusCodes.OK,
-    success: true,
-    message: "All submissions retrieved successfully",
+    message: "Submission recheck enqueued successfully",
     data: result,
   });
 });
 
 export const SubmissionController = {
   create: createSubmission,
-  createBulk: createBulkSubmissions,
   getStatus: getSubmissionStatus,
   getByAssignment: getSubmissionByAssignment,
-  getByAssignmentPaginated: getSubmissionByAssignmentPaginated,
   getById: getSubmissionById,
-  update: updateSubmission,
-  recheck: recheckSubmission,
   getAll: getAllSubmissions,
+  getStats,
+  recheck: recheckSubmission,
 };

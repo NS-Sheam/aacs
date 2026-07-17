@@ -66,7 +66,7 @@ export function validateRequirements(reqs: Record<string, any>): void {
           `${section}.${reqKey} — "correct" (boolean) is required`,
         );
       }
-      if (!r.message || typeof r.message !== "string") {
+      if (r.message === undefined || r.message === null || typeof r.message !== "string") {
         throw new Error(
           `${section}.${reqKey} — "message" is required and must be a string`,
         );
@@ -77,31 +77,31 @@ export function validateRequirements(reqs: Record<string, any>): void {
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
-// Create a new assignment
+// Create or update a new assignment (upsert)
 const createAssignment = async (data: CreateAssignmentDTO) => {
   validateRequirements(data.originalRequirements);
 
-  const assignment = await Assignment.create({
-    assignmentNo: data.assignmentNo,
-    batch: data.batch,
-    title: data.title,
-    figmaUrl: data.figmaUrl,
-    originalRequirements: data.originalRequirements,
-    dbSeedConfig: data.dbSeedConfig,
-    confidenceThreshold: data.confidenceThreshold ?? 0.75,
-    status: "draft",
-    version: 1,
-  });
+  // Check if original requirements are pre-enriched
+  const firstSection = Object.values(data.originalRequirements)[0];
+  const firstReq = firstSection ? Object.values(firstSection)[0] : null;
+  const isPreEnriched = firstReq && (firstReq as any).automationTier !== undefined;
 
-  // Trigger Gemini enrichment in background — non-blocking
-
-  import("./enrichment.service").then(({ enrichAssignment }) => {
-    enrichAssignment(assignment._id.toString())
-      .then(() => console.log(`Enrichment done: ${assignment._id}`))
-      .catch((err) =>
-        console.error("Background enrichment error:", err.message),
-      );
-  });
+  const assignment = await Assignment.findOneAndUpdate(
+    { assignmentNo: data.assignmentNo, batch: data.batch },
+    {
+      assignmentNo: data.assignmentNo,
+      batch: data.batch,
+      title: data.title,
+      figmaUrl: data.figmaUrl,
+      originalRequirements: data.originalRequirements,
+      enrichedRequirements: isPreEnriched ? data.originalRequirements : undefined,
+      dbSeedConfig: data.dbSeedConfig,
+      confidenceThreshold: data.confidenceThreshold ?? 0.75,
+      status: isPreEnriched ? "active" : "draft",
+      $inc: { version: 1 }
+    },
+    { new: true, upsert: true }
+  );
 
   return assignment;
 };
@@ -140,12 +140,23 @@ const update = async (id: string, data: UpdateAssignmentDTO) => {
 
   if (!assignment) return null;
 
-  // If requirements are being updated — validate and clear enrichment
+  // If requirements are being updated — validate and clear/copy enrichment
   if (data.originalRequirements) {
     validateRequirements(data.originalRequirements);
     assignment.originalRequirements = data.originalRequirements;
-    assignment.enrichedRequirements = undefined;
-    assignment.status = "draft"; // re-draft until re-enriched
+
+    // Check if new requirements are pre-enriched
+    const firstSection = Object.values(data.originalRequirements)[0];
+    const firstReq = firstSection ? Object.values(firstSection)[0] : null;
+    const isPreEnriched = firstReq && (firstReq as any).automationTier !== undefined;
+
+    if (isPreEnriched) {
+      assignment.enrichedRequirements = data.originalRequirements;
+      assignment.status = "active";
+    } else {
+      assignment.enrichedRequirements = undefined;
+      assignment.status = "draft"; // re-draft until re-enriched
+    }
   }
 
   if (data.title !== undefined) assignment.title = data.title;
@@ -168,7 +179,7 @@ const activate = async (id: string) => {
   const assignment = await Assignment.findByIdAndUpdate(
     id,
     { status: "active" },
-    { returnDocument: "after" },
+    { new: true },
   );
   return assignment;
 };
@@ -178,7 +189,7 @@ const archive = async (id: string) => {
   const assignment = await Assignment.findByIdAndUpdate(
     id,
     { status: "archived" },
-    { returnDocument: "after" },
+    { new: true },
   );
   return assignment;
 };
@@ -194,7 +205,7 @@ const saveEnriched = async (
       enrichedRequirements,
       status: "active",
     },
-    { returnDocument: "after" },
+    { new: true },
   );
   return assignment;
 };
@@ -207,19 +218,9 @@ const getEnrichedRequirements = async (id: string) => {
   return assignment;
 };
 
-// Lightweight enrichment status — frontend polls this to know when
-// enrichment has completed without pulling the heavy enriched payload.
-const getEnrichmentStatus = async (id: string) => {
-  const assignment = await Assignment.findById(id).select(
-    "status enrichedRequirements version",
-  );
-  if (!assignment) return null;
-
-  return {
-    enrichmentComplete: !!assignment.enrichedRequirements,
-    status: assignment.status,
-    version: assignment.version,
-  };
+// Delete assignment
+const deleteAssignment = async (id: string) => {
+  return Assignment.findByIdAndDelete(id);
 };
 
 export const AssignmentService = {
@@ -232,5 +233,5 @@ export const AssignmentService = {
   archive: archive,
   saveEnriched: saveEnriched,
   getEnrichedRequirements: getEnrichedRequirements,
-  getEnrichmentStatus: getEnrichmentStatus,
+  delete: deleteAssignment,
 };
