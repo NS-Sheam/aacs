@@ -13,16 +13,16 @@ services:
       - key: PORT
         value: 7777
       - key: MONGODB_URI
-        sync: false
+        value: mongodb+srv://simple-crud:0TxCL5jZ9DIMozhh@ccluster0.5pxwvij.mongodb.net/devengers-aacs2?retryWrites=true&w=majority
       - key: REDIS_HOST
-        sync: false
+        value: main-gar-180745.upstash.io
       - key: REDIS_PORT
-        sync: false
+        value: 6379
       - key: REDIS_PASSWORD
-        sync: false
+        value: gQAAAAAAAsIJAAIgcDI0ZDViY2QzYWYzNzc0NWNjYmIzMDE3MzRlMmM4ZDk4Ng
       - key: GITHUB_TOKEN
-        sync: false
+        value: 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
       - key: GEMINI_API_KEY
-        sync: false
+        value: AQ.Ab8RN6K5Rl6LGKdVN_16ca8hKk1l3pXee64_HDGuBocStkDSjA
       - key: CLIENT_URL
-        sync: false
+        value: https://aacs-client.vercel.app
