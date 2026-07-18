@@ -2,7 +2,9 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface ISubmission extends Document {
   assignmentId: mongoose.Types.ObjectId;
-  studentName?: string;
+  studentName: string;
+  studentId: string;
+  studentEmail: string;
   liveUrl: string;
   githubUrl: string;
   status: "queued" | "running" | "completed" | "error";
@@ -23,7 +25,9 @@ const SubmissionSchema = new Schema<ISubmission>(
       ref: "Assignment",
       required: true,
     },
-    studentName: { type: String },
+    studentName: { type: String, required: true },
+    studentId: { type: String, required: true },
+    studentEmail: { type: String, required: true },
     liveUrl: { type: String, required: true },
     githubUrl: { type: String, required: true },
     status: {

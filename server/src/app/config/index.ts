@@ -7,8 +7,11 @@ interface Config {
   nodeEnv: string;
   redisHost: string;
   redisPort: number;
+  redisPassword: string;
   githubToken: string;
   db_uri: string;
+  geminiApiKey: string;
+  clientUrl: string;
 }
 
 const config: Config = {
@@ -17,8 +20,10 @@ const config: Config = {
   db_uri: process.env.MONGODB_URI!,
   redisHost: process.env.REDIS_HOST || "127.0.0.1",
   redisPort: Number(process.env.REDIS_PORT) || 6379,
-  githubToken:
-    process.env.GITHUB_TOKEN || "your_github_personal_access_token_here",
+  redisPassword: process.env.REDIS_PASSWORD || "",
+  githubToken: process.env.GITHUB_TOKEN!,
+  geminiApiKey: process.env.GEMINI_API_KEY || "",
+  clientUrl: process.env.CLIENT_URL || "http://localhost:5555",
 };
 
 export default config;

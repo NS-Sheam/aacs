@@ -1,0 +1,428 @@
+{
+  "assignmentMeta": {
+    "title": "Assignment 7 - Keen Keeper",
+    "batch": 12,
+    "type": "full-stack",
+    "version": 1
+  },
+  "figmaUrl": null,
+  "requirements": {
+    "Navbar": {
+      "req-1": {
+        "description": "Make the Navbar like Figma",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          "nav",
+          "header",
+          ".navbar"
+        ]
+      },
+      "req-2": {
+        "description": "Logo on the left side",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-position",
+        "automationTier": 1,
+        "selectors": [
+          ".logo",
+          "nav img",
+          "header a:first-child"
+        ]
+      },
+      "req-3": {
+        "description": "Navlinks (Home, Timeline, Stats) on the right side with icon and active style",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-position",
+        "automationTier": 1,
+        "selectors": [
+          "nav ul",
+          "nav div:last-child",
+          ".nav-links"
+        ]
+      }
+    },
+    "Banner-Section": {
+      "req-1": {
+        "description": "Banner has centered title and subtitle",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-position",
+        "automationTier": 1,
+        "selectors": [
+          ".banner h1",
+          ".hero h2",
+          ".banner-text"
+        ]
+      },
+      "req-2": {
+        "description": "Banner has a button with icon",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".banner button",
+          ".hero a.btn"
+        ]
+      },
+      "req-3": {
+        "description": "4 Cards below the banner according to Figma",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-count",
+        "automationTier": 1,
+        "selectors": [
+          ".banner + div .card",
+          ".stats-container .card"
+        ]
+      }
+    },
+    "JSON-Data": {
+      "req-1": {
+        "description": "Create 6-10 JSON Data of Friends with all required fields (id, name, picture, email, days_since_contact, status, tags, bio, goal, next_due_date)",
+        "number": "5",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-count",
+        "automationTier": 1,
+        "selectors": [
+          ".friend-card",
+          ".card-friend"
+        ]
+      }
+    },
+    "Your-Friends-Section": {
+      "req-1": {
+        "description": "Show Friend information in Cards like Figma",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".friends-list",
+          ".friend-grid"
+        ]
+      },
+      "req-2": {
+        "description": "Each Card displays name, picture, days_since_contact, tags, and status",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".friend-card img",
+          ".friend-card .status"
+        ]
+      },
+      "req-3": {
+        "description": "Cards are in 4 column layout on large device",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".grid-cols-4",
+          ".md\\:grid-cols-4",
+          "[class*='grid-cols']"
+        ]
+      },
+      "req-4": {
+        "description": "Clicking any card navigates to the Friend Details Page",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          ".friend-card a",
+          ".friend-card"
+        ]
+      }
+    },
+    "Friend-Details-Page": {
+      "req-1": {
+        "description": "Informations are visible in a layout like Figma",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".details-container",
+          "main"
+        ]
+      },
+      "req-2": {
+        "description": "Left Side - Friend information card with name, picture, status, tags, bio, email",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-position",
+        "automationTier": 1,
+        "selectors": [
+          ".details-left",
+          "section:first-child"
+        ]
+      },
+      "req-3": {
+        "description": "Left Side - 3 buttons with icon (Snooze 2 weeks, Archive, Delete)",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-count",
+        "automationTier": 1,
+        "selectors": [
+          ".details-left button",
+          ".actions-panel button"
+        ]
+      },
+      "req-4": {
+        "description": "Right Side - 3 Stats Cards (Days Since Contact, Goal, Next Due)",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-count",
+        "automationTier": 1,
+        "selectors": [
+          ".details-right .stat-card"
+        ]
+      },
+      "req-5": {
+        "description": "Right Side - Relationship Goal Card with Edit button",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".goal-card",
+          ".goal-card button"
+        ]
+      },
+      "req-6": {
+        "description": "Right Side - Quick Check-In Card with 3 buttons (Call, Text, Video)",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-count",
+        "automationTier": 1,
+        "selectors": [
+          ".check-in-card button"
+        ]
+      }
+    },
+    "Details-Page-Functionality": {
+      "req-1": {
+        "description": "Clicking on Call button adds update on Timeline",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          "button:has-text('Call')",
+          ".btn-call"
+        ]
+      },
+      "req-2": {
+        "description": "Clicking on Text button adds update on Timeline",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          "button:has-text('Text')",
+          ".btn-text"
+        ]
+      },
+      "req-3": {
+        "description": "Clicking on Video button adds update on Timeline",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          "button:has-text('Video')",
+          ".btn-video"
+        ]
+      }
+    },
+    "Timeline-Page": {
+      "req-1": {
+        "description": "Page has “Timeline” heading",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          "h1:has-text('Timeline')",
+          "h2:has-text('Timeline')"
+        ]
+      },
+      "req-2": {
+        "description": "Timeline Data is showing like Figma",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".timeline-container",
+          ".timeline-list"
+        ]
+      },
+      "req-3": {
+        "description": "Timeline Data shows Date, Relevant Icon, and Relevant title (Call/Text/Video)",
+        "number": "3",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          ".timeline-item",
+          ".timeline-item svg",
+          ".timeline-item-title"
+        ]
+      }
+    },
+    "Footer": {
+      "req-1": {
+        "description": "Design the Footer Section according to the Figma",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          "footer",
+          ".footer"
+        ]
+      }
+    },
+    "Responsive-Design": {
+      "req-1": {
+        "description": "Responsive whole website",
+        "number": "3",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          "body"
+        ]
+      }
+    },
+    "Other-Requirements": {
+      "req-1": {
+        "description": "Add 404 Page for unknown route",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          "h1"
+        ]
+      },
+      "req-2": {
+        "description": "Show a loading animation during fetching the Friends data on homepage",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          ".loading",
+          "[class*='spinner']"
+        ]
+      },
+      "req-3": {
+        "description": "Show relevant toast when clicking “Call”, “Text” and “Video” button",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          ".toast",
+          ".notification"
+        ]
+      },
+      "req-4": {
+        "description": "Ensure that reloading any route after deployment does not cause an error",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          "body"
+        ]
+      }
+    },
+    "Challenges-Requirements": {
+      "req-1": {
+        "description": "Friendship Analytics Page has “Friendship Analytics” heading",
+        "number": "1",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          "h1:has-text('Friendship Analytics')"
+        ]
+      },
+      "req-2": {
+        "description": "Pie chart according to Figma with Text, Call and Video Data",
+        "number": "4",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": [
+          "canvas",
+          "svg",
+          ".recharts-responsive-container"
+        ]
+      },
+      "req-3": {
+        "description": "Add filter functionality on Timeline page according to text, call and video",
+        "number": "3",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "functional-crud",
+        "automationTier": 2,
+        "selectors": [
+          "select",
+          ".filter-select",
+          "button.active"
+        ]
+      },
+      "req-4": {
+        "description": "Beautify your Github Repository with beautiful README (Project Name, Description, Technologies, 3 Features)",
+        "number": "2",
+        "correct": false,
+        "message": "not okay.",
+        "checkType": "ui-element",
+        "automationTier": 1,
+        "selectors": []
+      }
+    }
+  }
+}

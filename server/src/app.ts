@@ -1,5 +1,6 @@
 import express, { Application } from "express";
 import cors from "cors";
+import config from "./app/config";
 
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import { StatusCodes } from "http-status-codes";
@@ -13,9 +14,12 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5555"],
+    origin: [
+      "http://localhost:5555",
+      "http://localhost:3000",
+      config.clientUrl,
+    ],
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
-    // allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
 );
@@ -28,6 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/screenshots", express.static("logs/screenshots"));
 app.use("/api/v1", router);
 
 app.get("/", (req, res) => {
@@ -40,7 +45,9 @@ app.get("/", (req, res) => {
     },
   });
 });
-
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 app.use(globalErrorHandler);
 app.use(notFound);
 

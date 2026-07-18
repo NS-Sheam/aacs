@@ -1,0 +1,286 @@
+{
+  "assignmentMeta": {
+    "title": "Assignment 1 - Knowledge Vault UI",
+    "batch": 13,
+    "type": "static-ui",
+    "version": 1
+  },
+  "sampleSubmissions": [
+    {
+      "studentName": "nasrinrahman19924@gmail.com",
+      "liveUrl": "https://nasrinrahman19924.github.io/My-first-assignment01",
+      "githubUrl": "https://github.com/nasrinrahman19924/My-first-assignment01"
+    },
+    {
+      "studentName": "afsana.laz@gmail.com",
+      "liveUrl": "https://afsanalaz953.github.io/first-project/",
+      "githubUrl": "https://github.com/afsanalaz953/first-project"
+    },
+    {
+      "studentName": "faysal555356f@gmail.com",
+      "liveUrl": "https://faysal555356f-afk.github.io/Assigment-1/",
+      "githubUrl": "https://github.com/faysal555356f-afk/Assigment-1"
+    },
+    {
+      "studentName": "binaryiostream@gmail.com",
+      "liveUrl": "https://ferdousjamanfuad.github.io/Assignment/one/index.html",
+      "githubUrl": "https://github.com/ferdousjamanfuad/Assignment/tree/main/one"
+    }
+  ],
+  "requirements": {
+    "navbar": {
+      "req-1": {
+        "description": "Navbar logo is visible.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["nav img", ".logo img", "img[src*='logo-navbar.png']"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "navbar logo",
+            "selectorHint": "nav img, .logo img, img[src*='logo-navbar.png']",
+            "expected": true
+          }
+        ], 
+        "confidenceThreshold": 0.75
+      },
+      "req-2": {
+        "description": "Navbar features, how it works, and why different menu links are visible.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["nav ul", "nav .list", "nav a"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "navbar links",
+            "selectorHint": "nav ul, nav a, .list",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      },
+      "req-3": {
+        "description": "Primary call-to-action button is visible in the navbar.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["nav button", "nav a.btn", "nav .btn", "button:has-text('Get Early Access')"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "navbar button",
+            "selectorHint": "nav button, nav a.btn, nav .btn, button:has-text('Get Early Access')",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    },
+    "hero": {
+      "req-4": {
+        "description": "Hero heading is centered and visible, containing 'Structured Thinking'.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["h1", "h2", ".banner-content h2"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "text",
+            "target": "hero heading",
+            "selectorHint": "h1, h2, .banner-content h2",
+            "expected": "Structured Thinking"
+          }
+        ],
+        "confidenceThreshold": 0.75
+      },
+      "req-5": {
+        "description": "Hero section displays a button containing the text 'Start Building'.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["button.start-btn", "button:has-text('Start')", "a:has-text('Start')", ".hero-buttons button", ".hero-buttons a"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "start building button",
+            "selectorHint": ".start-btn, button:has-text('Start'), a:has-text('Start')",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    },
+    "problems": {
+      "req-6": {
+        "description": "Problems section heading containing 'Structure Does' is visible.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["#container h2", "#notes h2", "h2"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "text",
+            "target": "problems heading",
+            "selectorHint": "#container h2, #notes h2, h2",
+            "expected": "Structure Does"
+          }
+        ],
+        "confidenceThreshold": 0.75
+      },
+      "req-7": {
+        "description": "Section contains exactly 4 problem/notes cards.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "ui-count",
+        "automationTier": 1,
+        "selectors": [".note-card", ".note-box > div", "#notes .card", "#notes h3", "#container h3", ".problems h3", "section h3"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "count",
+            "target": "problem cards",
+            "selectorHint": ".note-card, .note-box > div, #notes h3, section h3",
+            "expected": 4
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    },
+    "solution": {
+      "req-8": {
+        "description": "Solution section contains the knowledge or brain image.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["img[src*='knowledge.png']", ".brain-container img"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "knowledge image",
+            "selectorHint": "img[src*='knowledge.png'], .brain-container img",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      },
+      "req-9": {
+        "description": "Solution section displays a heading about 'YOUR SECOND BRAIN' or structured knowledge.",
+        "number": "5",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": [".brain-text h2", ".brain-text h3", ".brain-text p", ".solution h2", "h2", "h3"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "text",
+            "target": "solution heading",
+            "selectorHint": ".brain-text h2, .brain-text h3, .solution h2, h2, h3",
+            "expected": "second brain"
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    },
+    "cta": {
+      "req-10": {
+        "description": "CTA section contains early access button.",
+        "number": "3",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": [".ready-container button", ".btn-2", "button:has-text('Get Early Access')"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "cta button",
+            "selectorHint": ".ready-container button, .btn-2, button:has-text('Get Early Access')",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    },
+    "footer": {
+      "req-11": {
+        "description": "Footer contains the footer logo.",
+        "number": "2",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 1,
+        "selectors": ["footer img", "img[src*='logo-footer.png']"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "exists",
+            "target": "footer logo",
+            "selectorHint": "footer img, img[src*='logo-footer.png']",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    },
+    "Challenges-Requirements": {
+      "req-12": {
+        "description": "Challenge: The page is fully responsive across mobile, tablet, and desktop viewports.",
+        "number": "10",
+        "correct": false,
+        "message": "",
+        "checkType": "static-ui",
+        "automationTier": 2,
+        "selectors": ["meta[name='viewport']", ".container", "body"],
+        "requiredState": null,
+        "confidence": 1.0,
+        "rules": [
+          {
+            "kind": "responsive",
+            "target": "page layout at mobile viewport",
+            "selectorHint": "body, .container",
+            "expected": true
+          }
+        ],
+        "confidenceThreshold": 0.75
+      }
+    }
+  }
+}

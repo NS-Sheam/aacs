@@ -2,7 +2,7 @@ import { Server } from "http";
 import app from "./app";
 import { errorlogger, logger } from "./app/config/logger";
 import { connectDB } from "./app/config/db";
-
+import "./app/worker/checkWorker";
 const config = {
   port: process.env.PORT || 7777,
   node_env: process.env.NODE_ENV || "development",
