@@ -1,0 +1,35 @@
+[phases.setup]
+nixPkgs = [
+  "nodejs_22",
+  "chromium",
+  "nss",
+  "nspr",
+  "atk",
+  "cups",
+  "dbus",
+  "libdrm",
+  "xorg.libXcomposite",
+  "xorg.libXdamage",
+  "xorg.libXrandr",
+  "xorg.libXfixes",
+  "xorg.libxcb",
+  "xorg.libX11",
+  "mesa",
+  "expat",
+  "pango",
+  "cairo",
+  "alsa-lib",
+  "libxkbcommon"
+]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = [
+  "npx playwright install chromium",
+  "npm run build"
+]
+
+[start]
+cmd = "npm start"

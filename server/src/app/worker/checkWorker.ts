@@ -21,7 +21,12 @@ let sharedBrowser: any = null;
 async function getSharedBrowser() {
   if (!sharedBrowser || !sharedBrowser.isConnected()) {
     console.log("Launching shared Chromium browser instance...");
-    sharedBrowser = await chromium.launch({ headless: true });
+    const launchOptions: any = { headless: true };
+    // On Railway/Linux, use system Chromium if CHROMIUM_PATH is set
+    if (process.env.CHROMIUM_PATH) {
+      launchOptions.executablePath = process.env.CHROMIUM_PATH;
+    }
+    sharedBrowser = await chromium.launch(launchOptions);
   }
   return sharedBrowser;
 }
