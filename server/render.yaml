@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: aacs-server
+    env: node
+    region: singapore
+    plan: free
+    rootDir: server
+
+    buildCommand: >
+      npm install &&
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.playwright
+      npx playwright install chromium &&
+      npm run build
+
+    startCommand: node dist/server.js
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 7777
+
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /opt/render/project/.playwright
+
+      - key: MONGODB_URI
+        sync: false
+
+      - key: REDIS_HOST
+        sync: false
+
+      - key: REDIS_PORT
+        value: 6379
+
+      - key: REDIS_PASSWORD
+        sync: false
+
+      - key: GITHUB_TOKEN
+        sync: false
+
+      - key: GEMINI_API_KEY
+        sync: false
+
+      - key: CLIENT_URL
+        sync: false
